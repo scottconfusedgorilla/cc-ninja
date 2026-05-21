@@ -4,6 +4,7 @@ import * as fs from "fs";
 import { parseTranscript } from "./parser";
 import { formatAsMarkdown, formatAsPlainText } from "./formatter";
 import { formatAsHtml } from "./htmlFormatter";
+import { emitTranscript } from "./transcriptEmitter";
 
 let statusBarItem: vscode.StatusBarItem;
 let lastFormattedMarkdown: string | undefined;
@@ -52,6 +53,14 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand(
       "cccNinja.copyThisSession",
       () => copyThisSessionCommand(context)
+    ),
+    vscode.commands.registerCommand(
+      "cccNinja.updateSessionTranscript",
+      () => updateSessionTranscriptCommand(context)
+    ),
+    vscode.commands.registerCommand(
+      "cccNinja.finalizeSessionTranscript",
+      () => finalizeSessionTranscriptCommand(context)
     )
   );
 }
@@ -190,8 +199,28 @@ async function findNewestTranscript(): Promise<vscode.Uri | undefined> {
   const homeDir = process.env.HOME || process.env.USERPROFILE || "";
   const claudeDir = path.join(homeDir, ".claude", "projects");
 
+  // Scope the search to the current workspace's encoded subfolder. Claude
+  // Code stores transcripts at ~/.claude/projects/<encoded-path>/ where the
+  // encoding replaces `:`, `/`, `\` with `-` (e.g. s:/Projects/foo →
+  // s--Projects-foo). Without this scoping, the global-newest pick can land
+  // a transcript from an unrelated project into this workspace's
+  // transcripts/ folder.
+  const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+  const scopeDir = workspaceFolder
+    ? path.join(claudeDir, encodeWorkspaceForClaude(workspaceFolder))
+    : claudeDir;
+
   try {
-    const pattern = new vscode.RelativePattern(claudeDir, "**/*.jsonl");
+    if (workspaceFolder) {
+      try {
+        const stat = await fs.promises.stat(scopeDir);
+        if (!stat.isDirectory()) return undefined;
+      } catch {
+        return undefined;
+      }
+    }
+
+    const pattern = new vscode.RelativePattern(scopeDir, "**/*.jsonl");
     const files = await vscode.workspace.findFiles(pattern, null, 200);
     if (files.length === 0) return undefined;
 
@@ -537,6 +566,193 @@ async function saveCommand(format: "md" | "txt" | "html") {
     await vscode.workspace.fs.writeFile(uri, Buffer.from(content, "utf-8"));
     vscode.window.showInformationMessage(`CCC Ninja: Saved to ${uri.fsPath}`);
   }
+}
+
+async function updateSessionTranscriptCommand(context: vscode.ExtensionContext) {
+  await runTranscriptCommand(context, { finalize: false, verbForToast: "Updated" });
+}
+
+async function finalizeSessionTranscriptCommand(context: vscode.ExtensionContext) {
+  await runTranscriptCommand(context, { finalize: true, verbForToast: "Finalized" });
+}
+
+interface RunOptions {
+  finalize: boolean;
+  verbForToast: string;
+}
+
+async function runTranscriptCommand(
+  context: vscode.ExtensionContext,
+  runOpts: RunOptions
+) {
+  statusBarItem.text = "$(sync~spin) CCC Ninja updating transcript...";
+
+  try {
+    const workspaceFolders = vscode.workspace.workspaceFolders;
+    if (!workspaceFolders || workspaceFolders.length === 0) {
+      vscode.window.showErrorMessage(
+        "CCC Ninja: Open a workspace folder first — transcripts are stored relative to the workspace root."
+      );
+      statusBarItem.text = "$(dash) CCC Ninja ready";
+      return;
+    }
+    const workspaceRoot = workspaceFolders[0].uri.fsPath;
+    const writeRoot = await findWorkingRepoRoot(workspaceRoot);
+
+    const roleId = await getOrPromptRoleId(context);
+    if (!roleId) {
+      statusBarItem.text = "$(dash) CCC Ninja ready";
+      return;
+    }
+
+    const directorIdentity = context.workspaceState.get<string>(
+      "cccNinja.directorIdentity"
+    );
+
+    const file = await findNewestTranscript();
+    if (!file) {
+      vscode.window.showWarningMessage(
+        "CCC Ninja: No Claude Code transcripts found."
+      );
+      statusBarItem.text = "$(dash) CCC Ninja ready";
+      return;
+    }
+
+    const raw = Buffer.from(
+      await vscode.workspace.fs.readFile(file)
+    ).toString("utf-8");
+    const messages = parseTranscript(raw);
+    if (messages.length === 0) {
+      vscode.window.showWarningMessage(
+        "CCC Ninja: No messages found in the current session."
+      );
+      statusBarItem.text = "$(dash) CCC Ninja ready";
+      return;
+    }
+
+    const markdownBody = formatAsMarkdown(messages, {
+      includeToolCalls: true,
+      includeToolResults: false,
+      includeTimestamps: true,
+    });
+
+    const version = context.extension.packageJSON.version as string;
+    const result = await emitTranscript({
+      roleId,
+      directorIdentity,
+      workspaceRoot: writeRoot,
+      jsonlPath: file.fsPath,
+      messages,
+      markdownBody,
+      packageVersion: version,
+      finalize: runOpts.finalize,
+    });
+
+    const verb = result.isNew ? "Created" : runOpts.verbForToast;
+    const relPath = path.relative(workspaceRoot, result.envelopePath);
+    const open = "Open envelope";
+    const reveal = "Reveal in Explorer";
+    const choice = await vscode.window.showInformationMessage(
+      `CCC Ninja: ${verb} transcript at ${relPath}`,
+      open,
+      reveal
+    );
+    if (choice === open) {
+      const doc = await vscode.workspace.openTextDocument(result.envelopePath);
+      await vscode.window.showTextDocument(doc);
+    } else if (choice === reveal) {
+      await vscode.commands.executeCommand(
+        "revealFileInOS",
+        vscode.Uri.file(result.envelopePath)
+      );
+    }
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    vscode.window.showErrorMessage(
+      `CCC Ninja: Failed to update transcript — ${msg}`
+    );
+  }
+
+  statusBarItem.text = "$(dash) CCC Ninja ready";
+}
+
+/**
+ * Walk shallowly looking for the "working-repo root" — the directory that
+ * holds CLAUDE.md alongside a recognizable spec marker (SCHEMA.md, memos/,
+ * decisions/, notes/, or transcripts/). For repos like memodef-spec, the
+ * workspace folder (memodef-spec/) is NOT the working root — the inner
+ * directory (memodef-spec/memodef/) is. Falls back to the workspace folder
+ * if no match is found.
+ */
+async function findWorkingRepoRoot(workspaceRoot: string): Promise<string> {
+  if (await isWorkingRoot(workspaceRoot)) return workspaceRoot;
+
+  try {
+    const entries = await fs.promises.readdir(workspaceRoot, {
+      withFileTypes: true,
+    });
+    for (const entry of entries) {
+      if (!entry.isDirectory()) continue;
+      if (entry.name.startsWith(".")) continue;
+      if (entry.name === "node_modules") continue;
+      const candidate = path.join(workspaceRoot, entry.name);
+      if (await isWorkingRoot(candidate)) return candidate;
+    }
+  } catch {
+    // unreadable workspace root — fall through to default
+  }
+
+  return workspaceRoot;
+}
+
+async function isWorkingRoot(dir: string): Promise<boolean> {
+  if (!(await pathExists(path.join(dir, "CLAUDE.md")))) return false;
+  const markers = ["SCHEMA.md", "memos", "decisions", "notes", "transcripts"];
+  for (const m of markers) {
+    if (await pathExists(path.join(dir, m))) return true;
+  }
+  return false;
+}
+
+async function pathExists(p: string): Promise<boolean> {
+  try {
+    await fs.promises.access(p);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function encodeWorkspaceForClaude(workspacePath: string): string {
+  return workspacePath.replace(/[:\\/]/g, "-");
+}
+
+async function getOrPromptRoleId(
+  context: vscode.ExtensionContext
+): Promise<string | undefined> {
+  const stored = context.workspaceState.get<string>("cccNinja.roleId");
+  if (stored) return stored;
+
+  const entered = await vscode.window.showInputBox({
+    prompt:
+      "What memodef role-id has Claude taken on in this workspace? (will be remembered per-workspace)",
+    placeHolder: "e.g., memodef-strategist, ccc-ninja-engineer",
+    ignoreFocusOut: true,
+    validateInput: (value) => {
+      const trimmed = value.trim();
+      if (!trimmed) return "Required";
+      if (!/^[a-z0-9][a-z0-9-]*$/.test(trimmed)) {
+        return "Use lowercase letters, digits, and hyphens only";
+      }
+      return null;
+    },
+  });
+
+  const trimmed = entered?.trim();
+  if (!trimmed) return undefined;
+
+  await context.workspaceState.update("cccNinja.roleId", trimmed);
+  return trimmed;
 }
 
 export function deactivate() {

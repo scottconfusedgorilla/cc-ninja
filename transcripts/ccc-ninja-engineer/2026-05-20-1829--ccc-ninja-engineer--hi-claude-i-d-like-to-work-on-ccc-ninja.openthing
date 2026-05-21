@@ -1,0 +1,23 @@
+{
+  "catdef": "1.4",
+  "memodef": "0.4.0",
+  "type": "memodef:Transcript",
+  "participants": [
+    {
+      "position": "ccc-ninja-engineer",
+      "session_arc": "claude-opus-4-7, vscode-claude-code session 9103a7c6-fefb-412a-be0d-08c7a69eec20"
+    }
+  ],
+  "started": "2026-05-20T22:29:20.944Z",
+  "subject": "Hi Claude. I'd like to work on ccc-ninja",
+  "transport": "vscode-claude-code",
+  "capture_tool": "ccc-ninja@0.12.0",
+  "capture_format": "markdown",
+  "body_ref": "2026-05-20-1829--ccc-ninja-engineer--hi-claude-i-d-like-to-work-on-ccc-ninja.body.md",
+  "metadata": {
+    "redaction_status": "raw",
+    "retention_policy": "permanent",
+    "source_jsonl": "c:\\Users\\edsby\\.claude\\projects\\s--Projects-ccc-ninja\\9103a7c6-fefb-412a-be0d-08c7a69eec20.jsonl"
+  },
+  "ended": "2026-05-20T23:10:30.402Z"
+}

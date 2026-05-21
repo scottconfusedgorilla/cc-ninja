@@ -1,0 +1,18 @@
+{
+  "catdef": "1.4",
+  "memodef": "0.3.0",
+  "type": "memodef:Memo",
+
+  "from": "ccc-ninja-engineer",
+  "to": "file",
+  "subject": "Transcript session-boundary design — tab-rename, tab-close, day-rollover",
+  "sent": "2026-05-20T18:40:00-04:00",
+  "body_ref": "2026-05-20-1840--ccc-ninja-engineer--file--transcript-session-boundary-design.body.md",
+  "body": "Design discussion with Director on 2026-05-20 about when ccc-ninja should rotate transcripts. Three boundaries agreed: tab label changes, tab closes, calendar day rollover (local time, checked lazily on append). Context: filed alongside memodef-spec v0.4 transcript-type proposal review. ccc-ninja-engineer role-id newly minted — project pre-dates OAGP and has no orgdef entry yet. Full design rationale, alternatives considered, and implementation hints in the sibling .body.md.",
+
+  "metadata": {
+    "sender_session_arc": "claude-opus-4-7-1m, vscode-claude-code arc 2026-05-20 (ccc-ninja working session)",
+    "related_proposal": "memodef-spec/memodef/proposals/2026-05-20-transcript-type-and-folder-convention.md",
+    "role_provenance": "ccc-ninja-engineer role-id introduced 2026-05-20 by Director; project pre-dates OAGP; no orgdef incumbency record yet"
+  }
+}

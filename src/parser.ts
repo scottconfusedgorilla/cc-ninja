@@ -3,7 +3,7 @@
  */
 
 export interface ParsedMessage {
-  role: "user" | "assistant" | "tool_use" | "tool_result";
+  role: "user" | "assistant" | "tool_use" | "tool_result" | "system_reminder";
   timestamp: string;
   content: string;
   model?: string;
@@ -31,6 +31,45 @@ interface ContentBlock {
   input?: Record<string, unknown>;
   content?: string | ToolResultContent[];
   tool_use_id?: string;
+  source?: { type?: string; media_type?: string; data?: string };
+}
+
+const SYSTEM_REMINDER_RE = /<system-reminder>([\s\S]*?)<\/system-reminder>/g;
+
+/**
+ * Pulls <system-reminder>...</system-reminder> blocks out of user text and
+ * returns them separately. system-reminders are infrastructure (they shape
+ * the assistant's behavior) and read more clearly when surfaced distinctly
+ * from the user's own words.
+ *
+ * NOTE (2026-05-21): Claude Code does NOT persist system-reminders to the
+ * session JSONL — they are transient runtime context injections delivered
+ * to the model but never written to disk. As of writing, this extractor
+ * runs against every user message but never finds anything. The code is
+ * kept in place against the possibility that the persistence model changes
+ * (or that a sidecar source becomes available); if/when it does, no
+ * downstream changes are needed.
+ */
+function extractSystemReminders(text: string): {
+  reminders: string[];
+  remaining: string;
+} {
+  const reminders: string[] = [];
+  const remaining = text
+    .replace(SYSTEM_REMINDER_RE, (_match, inner) => {
+      reminders.push(String(inner).trim());
+      return "";
+    })
+    .trim();
+  return { reminders, remaining };
+}
+
+function imagePlaceholder(block: ContentBlock): string {
+  const mediaType = block.source?.media_type ?? "image";
+  const dataLen = block.source?.data?.length ?? 0;
+  // base64 is ~4/3 the size of the source bytes
+  const approxKB = Math.max(1, Math.round((dataLen * 0.75) / 1024));
+  return `[Image: ${mediaType}, ~${approxKB} KB]`;
 }
 
 interface ToolResultContent {
@@ -59,7 +98,7 @@ export function parseTranscript(raw: string): ParsedMessage[] {
 
     if (role === "user") {
       if (typeof content === "string") {
-        messages.push({ role: "user", timestamp: ts, content });
+        emitUserText(messages, ts, content);
       } else if (Array.isArray(content)) {
         for (const block of content) {
           if (block.type === "tool_result") {
@@ -73,7 +112,13 @@ export function parseTranscript(raw: string): ParsedMessage[] {
               });
             }
           } else if (block.type === "text" && block.text) {
-            messages.push({ role: "user", timestamp: ts, content: block.text });
+            emitUserText(messages, ts, block.text);
+          } else if (block.type === "image") {
+            messages.push({
+              role: "user",
+              timestamp: ts,
+              content: imagePlaceholder(block),
+            });
           }
         }
       }
@@ -115,6 +160,20 @@ export function parseTranscript(raw: string): ParsedMessage[] {
   }
 
   return messages;
+}
+
+function emitUserText(
+  messages: ParsedMessage[],
+  ts: string,
+  text: string
+): void {
+  const { reminders, remaining } = extractSystemReminders(text);
+  for (const reminder of reminders) {
+    messages.push({ role: "system_reminder", timestamp: ts, content: reminder });
+  }
+  if (remaining) {
+    messages.push({ role: "user", timestamp: ts, content: remaining });
+  }
 }
 
 function extractToolResultText(block: ContentBlock): string {

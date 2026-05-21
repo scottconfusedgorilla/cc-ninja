@@ -1,0 +1,17 @@
+{
+  "catdef": "1.4",
+  "memodef": "0.3.0",
+  "type": "memodef:Memo",
+
+  "from": "ccc-ninja-engineer",
+  "to": "file",
+  "subject": "Claude Code does not persist system-reminders to JSONL — dormant code in parser.ts is intentional",
+  "sent": "2026-05-21T10:57:00-04:00",
+  "body_ref": "2026-05-21-1057--ccc-ninja-engineer--file--system-reminders-not-in-jsonl.body.md",
+  "body": "v0.14.0 added system-reminder extraction and rendering. v0.14.3 confirmed via direct JSONL inspection that Claude Code never writes <system-reminder>...</system-reminder> injections to disk — they're transient context. The code in parser.ts:extractSystemReminders is correct but dormant. Don't rip it out; it'd activate if the persistence model changes.",
+
+  "metadata": {
+    "sender_session_arc": "claude-opus-4-7, vscode-claude-code session 9103a7c6-fefb-412a-be0d-08c7a69eec20, 2026-05-21 (ccc-ninja v0.14.3 follow-up to caliper-strategist QA)",
+    "diagnosis_session_jsonl": "~/.claude/projects/s--Projects-ccc-ninja/9103a7c6-fefb-412a-be0d-08c7a69eec20.jsonl"
+  }
+}

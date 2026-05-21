@@ -97,6 +97,15 @@ function renderMessage(
       return renderToolCall(msg.toolName ?? "Tool", desc, input, result, ts, options);
     }
 
+    case "system_reminder":
+      return `    <div class="message system-reminder-message">
+      <div class="message-header">
+        <span class="dot dot-system-reminder">🛎️</span>
+        <span class="role-label">System reminder</span>${ts}
+      </div>
+      <div class="system-reminder-body">${escapeAndFormat(msg.content)}</div>
+    </div>`;
+
     default:
       return "";
   }
@@ -342,6 +351,27 @@ body {
 }
 .dot-user { background: var(--blue-dot); }
 .dot-assistant { background: var(--purple); }
+.dot-system-reminder {
+  background: transparent;
+  width: auto;
+  height: auto;
+  font-size: 11px;
+  line-height: 1;
+}
+
+.system-reminder-message {
+  margin: 4px 0;
+}
+.system-reminder-body {
+  background: var(--bg-code);
+  border-left: 3px solid var(--text-dim);
+  padding: 6px 10px;
+  font-size: 12px;
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  white-space: pre-wrap;
+  border-radius: 0 4px 4px 0;
+}
 
 .role-label {
   font-family: var(--font-sans);

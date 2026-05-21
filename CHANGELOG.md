@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.14.3
+
+- **Documentation of a finding from caliper-strategist 2026-05-21:** the v0.14.0 system-reminder extractor + renderer is correctly wired but never finds work to do, because Claude Code does not persist `<system-reminder>` injections to the session JSONL. They are transient runtime context — delivered to the model but never written to disk. A grep through both the ccc-ninja and caliper session JSONLs found zero reminder injections in user content (all hits were in tool inputs/outputs where the literal string had been written by the author). Code left dormant for future-proofing; comment added in [parser.ts](src/parser.ts) explaining the situation
+
+## 0.14.2
+
+- **Fixes stuck-spinner bug** caught by Director 2026-05-21. The status bar item's text was being mutated during interactive prompts and git lookups, which left the spinner appearing wedged whenever a prompt was waiting on user input. Now uses `vscode.window.withProgress` for the file-work phase only — auto-cleans up on completion or error — and all prerequisite prompts run before the progress indicator appears. The persistent button label stays "Update Transcript" throughout
+
+## 0.14.1
+
+- **Status bar button rebound** to `cccNinja.updateSessionTranscript` and renamed to "Update Transcript" (was "Copy current Claude Code session transcript" pointing at the v0.7 quick-action)
+- **Status bar tooltip** now shows the path of the last-captured transcript when one exists; persists across reloads via workspaceState
+- **Defensive 2 s timeout** on the `git config user.email` lookup added in v0.14.0, to prevent the status bar spinner from getting stuck if the git binary is missing or hangs
+
+## 0.14.0
+
+Acts on QA feedback from caliper-strategist 2026-05-21 (three issues found while using ccc-ninja@0.13.1 for real).
+
+- **Human participant in `participants[]`.** Transcripts now declare both sides of the conversation. Director identity is auto-inferred from `git config user.email` (preferred) or OS username (fallback), persisted per-workspace, no prompt required
+- **`<system-reminder>` blocks rendered distinctly.** Previously these harness signals were mashed into the user message text. Now extracted from user content, surfaced as a separate role with 🛎️ glyph in markdown and a muted monospace box in the HTML view
+- **Image placeholders.** When the user pasted a screenshot, the body showed nothing where the image was. Now emits `[Image: <media-type>, ~<N> KB]` so a future reader knows an image was present in the original exchange
+- **`CCC Ninja: Set Role-id for This Workspace` command** + role-id surfaced in the success toast — defensive UX for the typo case (`caliper-strategis` slipping in for `caliper-strategist`). The 17-char "truncation" caliper-strategist observed is not a code path in ccc-ninja; the input validator accepts any well-formed lowercase identifier. The new command lets you correct a mistyped role-id without hand-editing workspaceState
+
 ## 0.13.1
 
 - **Bug fix:** `findNewestTranscript()` now scopes the search to the current workspace's encoded subfolder under `~/.claude/projects/` (e.g. `s:/Projects/thingalog` → `s--Projects-thingalog`). Previously it picked the globally newest `.jsonl` from any project, which could land a transcript from an unrelated session into the current workspace's `transcripts/` folder. Caught by thingalog-strategist 2026-05-20.

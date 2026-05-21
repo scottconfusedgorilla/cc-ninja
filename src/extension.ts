@@ -1,10 +1,15 @@
 import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";
+import * as os from "os";
+import { execFile } from "child_process";
+import { promisify } from "util";
 import { parseTranscript } from "./parser";
 import { formatAsMarkdown, formatAsPlainText } from "./formatter";
 import { formatAsHtml } from "./htmlFormatter";
 import { emitTranscript } from "./transcriptEmitter";
+
+const execFileAsync = promisify(execFile);
 
 let statusBarItem: vscode.StatusBarItem;
 let lastFormattedMarkdown: string | undefined;
@@ -18,9 +23,9 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.StatusBarAlignment.Right,
     100
   );
-  statusBarItem.text = "$(dash) CCC Ninja ready";
-  statusBarItem.command = "cccNinja.copyThisSession";
-  statusBarItem.tooltip = "Copy current Claude Code session transcript";
+  statusBarItem.text = "$(notebook) Update Transcript";
+  statusBarItem.command = "cccNinja.updateSessionTranscript";
+  refreshStatusBarTooltip(context);
   statusBarItem.show();
   context.subscriptions.push(statusBarItem);
 
@@ -61,8 +66,27 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand(
       "cccNinja.finalizeSessionTranscript",
       () => finalizeSessionTranscriptCommand(context)
+    ),
+    vscode.commands.registerCommand(
+      "cccNinja.setRoleId",
+      () => setRoleIdCommand(context)
     )
   );
+}
+
+async function setRoleIdCommand(context: vscode.ExtensionContext) {
+  const existing = context.workspaceState.get<string>("cccNinja.roleId");
+  await context.workspaceState.update("cccNinja.roleId", undefined);
+  const fresh = await getOrPromptRoleId(context);
+  if (fresh) {
+    const change = existing ? ` (was: ${existing})` : "";
+    vscode.window.showInformationMessage(
+      `CCC Ninja: role-id set to ${fresh}${change}`
+    );
+  } else if (existing) {
+    // User cancelled; restore the prior value rather than orphaning state
+    await context.workspaceState.update("cccNinja.roleId", existing);
+  }
 }
 
 async function copyTranscriptCommand(context: vscode.ExtensionContext) {
@@ -81,7 +105,7 @@ async function copyTranscriptCommand(context: vscode.ExtensionContext) {
       vscode.window.showWarningMessage(
         "CCC Ninja: No messages found in the selected file."
       );
-      statusBarItem.text = "$(dash) CCC Ninja ready";
+      statusBarItem.text = "$(notebook) Update Transcript";
       return;
     }
 
@@ -114,7 +138,7 @@ async function copyTranscriptCommand(context: vscode.ExtensionContext) {
     );
 
     if (!format) {
-      statusBarItem.text = "$(dash) CCC Ninja ready";
+      statusBarItem.text = "$(notebook) Update Transcript";
       return;
     }
 
@@ -135,7 +159,7 @@ async function copyTranscriptCommand(context: vscode.ExtensionContext) {
     vscode.window.showErrorMessage(`CCC Ninja: Failed to parse — ${msg}`);
   }
 
-  statusBarItem.text = "$(dash) CCC Ninja ready";
+  statusBarItem.text = "$(notebook) Update Transcript";
 }
 
 async function copyThisSessionCommand(context: vscode.ExtensionContext) {
@@ -147,7 +171,7 @@ async function copyThisSessionCommand(context: vscode.ExtensionContext) {
       vscode.window.showWarningMessage(
         "CCC Ninja: No Claude Code transcripts found."
       );
-      statusBarItem.text = "$(dash) CCC Ninja ready";
+      statusBarItem.text = "$(notebook) Update Transcript";
       return;
     }
 
@@ -160,7 +184,7 @@ async function copyThisSessionCommand(context: vscode.ExtensionContext) {
       vscode.window.showWarningMessage(
         "CCC Ninja: No messages found in the current session."
       );
-      statusBarItem.text = "$(dash) CCC Ninja ready";
+      statusBarItem.text = "$(notebook) Update Transcript";
       return;
     }
 
@@ -192,7 +216,7 @@ async function copyThisSessionCommand(context: vscode.ExtensionContext) {
     vscode.window.showErrorMessage(`CCC Ninja: Failed to parse — ${msg}`);
   }
 
-  statusBarItem.text = "$(dash) CCC Ninja ready";
+  statusBarItem.text = "$(notebook) Update Transcript";
 }
 
 async function findNewestTranscript(): Promise<vscode.Uri | undefined> {
@@ -585,95 +609,111 @@ async function runTranscriptCommand(
   context: vscode.ExtensionContext,
   runOpts: RunOptions
 ) {
-  statusBarItem.text = "$(sync~spin) CCC Ninja updating transcript...";
-
-  try {
-    const workspaceFolders = vscode.workspace.workspaceFolders;
-    if (!workspaceFolders || workspaceFolders.length === 0) {
-      vscode.window.showErrorMessage(
-        "CCC Ninja: Open a workspace folder first — transcripts are stored relative to the workspace root."
-      );
-      statusBarItem.text = "$(dash) CCC Ninja ready";
-      return;
-    }
-    const workspaceRoot = workspaceFolders[0].uri.fsPath;
-    const writeRoot = await findWorkingRepoRoot(workspaceRoot);
-
-    const roleId = await getOrPromptRoleId(context);
-    if (!roleId) {
-      statusBarItem.text = "$(dash) CCC Ninja ready";
-      return;
-    }
-
-    const directorIdentity = context.workspaceState.get<string>(
-      "cccNinja.directorIdentity"
-    );
-
-    const file = await findNewestTranscript();
-    if (!file) {
-      vscode.window.showWarningMessage(
-        "CCC Ninja: No Claude Code transcripts found."
-      );
-      statusBarItem.text = "$(dash) CCC Ninja ready";
-      return;
-    }
-
-    const raw = Buffer.from(
-      await vscode.workspace.fs.readFile(file)
-    ).toString("utf-8");
-    const messages = parseTranscript(raw);
-    if (messages.length === 0) {
-      vscode.window.showWarningMessage(
-        "CCC Ninja: No messages found in the current session."
-      );
-      statusBarItem.text = "$(dash) CCC Ninja ready";
-      return;
-    }
-
-    const markdownBody = formatAsMarkdown(messages, {
-      includeToolCalls: true,
-      includeToolResults: false,
-      includeTimestamps: true,
-    });
-
-    const version = context.extension.packageJSON.version as string;
-    const result = await emitTranscript({
-      roleId,
-      directorIdentity,
-      workspaceRoot: writeRoot,
-      jsonlPath: file.fsPath,
-      messages,
-      markdownBody,
-      packageVersion: version,
-      finalize: runOpts.finalize,
-    });
-
-    const verb = result.isNew ? "Created" : runOpts.verbForToast;
-    const relPath = path.relative(workspaceRoot, result.envelopePath);
-    const open = "Open envelope";
-    const reveal = "Reveal in Explorer";
-    const choice = await vscode.window.showInformationMessage(
-      `CCC Ninja: ${verb} transcript at ${relPath}`,
-      open,
-      reveal
-    );
-    if (choice === open) {
-      const doc = await vscode.workspace.openTextDocument(result.envelopePath);
-      await vscode.window.showTextDocument(doc);
-    } else if (choice === reveal) {
-      await vscode.commands.executeCommand(
-        "revealFileInOS",
-        vscode.Uri.file(result.envelopePath)
-      );
-    }
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : String(err);
+  // Resolve all interactive prerequisites BEFORE showing any progress.
+  // Showing a spinner during prompts/git lookups confuses the user when
+  // the work is just waiting on them.
+  const workspaceFolders = vscode.workspace.workspaceFolders;
+  if (!workspaceFolders || workspaceFolders.length === 0) {
     vscode.window.showErrorMessage(
-      `CCC Ninja: Failed to update transcript — ${msg}`
+      "CCC Ninja: Open a workspace folder first — transcripts are stored relative to the workspace root."
     );
+    return;
   }
+  const workspaceRoot = workspaceFolders[0].uri.fsPath;
 
-  statusBarItem.text = "$(dash) CCC Ninja ready";
+  const roleId = await getOrPromptRoleId(context);
+  if (!roleId) return;
+
+  // Now do the actual file work under withProgress so the spinner
+  // auto-cleans up on completion or error.
+  await vscode.window.withProgress(
+    {
+      location: vscode.ProgressLocation.Window,
+      title: "CCC Ninja: updating transcript",
+    },
+    async () => {
+      try {
+        const writeRoot = await findWorkingRepoRoot(workspaceRoot);
+        const directorIdentity = await getOrInferDirectorIdentity(
+          context,
+          writeRoot
+        );
+
+        const file = await findNewestTranscript();
+        if (!file) {
+          vscode.window.showWarningMessage(
+            "CCC Ninja: No Claude Code transcripts found for this workspace."
+          );
+          return;
+        }
+
+        const raw = Buffer.from(
+          await vscode.workspace.fs.readFile(file)
+        ).toString("utf-8");
+        const messages = parseTranscript(raw);
+        if (messages.length === 0) {
+          vscode.window.showWarningMessage(
+            "CCC Ninja: No messages found in the current session."
+          );
+          return;
+        }
+
+        const markdownBody = formatAsMarkdown(messages, {
+          includeToolCalls: true,
+          includeToolResults: false,
+          includeTimestamps: true,
+        });
+
+        const version = context.extension.packageJSON.version as string;
+        const result = await emitTranscript({
+          roleId,
+          directorIdentity,
+          workspaceRoot: writeRoot,
+          jsonlPath: file.fsPath,
+          messages,
+          markdownBody,
+          packageVersion: version,
+          finalize: runOpts.finalize,
+        });
+
+        const verb = result.isNew ? "Created" : runOpts.verbForToast;
+        const relPath = path.relative(workspaceRoot, result.envelopePath);
+        await context.workspaceState.update(
+          "cccNinja.lastTranscriptRelPath",
+          relPath
+        );
+        await context.workspaceState.update(
+          "cccNinja.lastTranscriptAbsPath",
+          result.envelopePath
+        );
+        refreshStatusBarTooltip(context);
+
+        const open = "Open envelope";
+        const reveal = "Reveal in Explorer";
+        const choice = await vscode.window.showInformationMessage(
+          `CCC Ninja: ${verb} transcript for ${roleId} at ${relPath}`,
+          open,
+          reveal
+        );
+        if (choice === open) {
+          const doc = await vscode.workspace.openTextDocument(
+            result.envelopePath
+          );
+          await vscode.window.showTextDocument(doc);
+        } else if (choice === reveal) {
+          await vscode.commands.executeCommand(
+            "revealFileInOS",
+            vscode.Uri.file(result.envelopePath)
+          );
+        }
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        vscode.window.showErrorMessage(
+          `CCC Ninja: Failed to update transcript — ${msg}`
+        );
+      }
+    }
+  );
 }
 
 /**
@@ -725,6 +765,62 @@ async function pathExists(p: string): Promise<boolean> {
 
 function encodeWorkspaceForClaude(workspacePath: string): string {
   return workspacePath.replace(/[:\\/]/g, "-");
+}
+
+/**
+ * Inferred director identity for the human side of participants[]. Cached
+ * per-workspace; falls back to `git config user.email` then OS username.
+ * Returns undefined only if all sources fail.
+ */
+async function getOrInferDirectorIdentity(
+  context: vscode.ExtensionContext,
+  cwd: string
+): Promise<string | undefined> {
+  const stored = context.workspaceState.get<string>("cccNinja.directorIdentity");
+  if (stored) return stored;
+
+  const gitEmail = await getGitUserEmail(cwd);
+  if (gitEmail) {
+    await context.workspaceState.update("cccNinja.directorIdentity", gitEmail);
+    return gitEmail;
+  }
+
+  try {
+    const username = os.userInfo().username;
+    if (username) {
+      await context.workspaceState.update("cccNinja.directorIdentity", username);
+      return username;
+    }
+  } catch {
+    // fall through
+  }
+
+  return undefined;
+}
+
+async function getGitUserEmail(cwd: string): Promise<string | undefined> {
+  try {
+    const { stdout } = await execFileAsync("git", ["config", "user.email"], {
+      cwd,
+      timeout: 2000,
+    });
+    const email = stdout.trim();
+    return email || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function refreshStatusBarTooltip(context: vscode.ExtensionContext): void {
+  const relPath = context.workspaceState.get<string>(
+    "cccNinja.lastTranscriptRelPath"
+  );
+  if (relPath) {
+    statusBarItem.tooltip = `Click to update transcript\nLast captured: ${relPath}`;
+  } else {
+    statusBarItem.tooltip =
+      "Click to update transcript — captures the current Claude Code session as a memodef:Transcript pair (envelope + sibling .body.md)";
+  }
 }
 
 async function getOrPromptRoleId(

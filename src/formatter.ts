@@ -60,6 +60,12 @@ export function formatAsMarkdown(
           `<details><summary>Tool Result${timestamp}</summary>\n\n\`\`\`\n${truncate(msg.content, 2000)}\n\`\`\`\n</details>\n`
         );
         break;
+
+      case "system_reminder":
+        sections.push(
+          `> 🛎️ **System reminder**${timestamp}\n> ${msg.content.split("\n").join("\n> ")}\n`
+        );
+        break;
     }
   }
 

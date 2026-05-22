@@ -1,0 +1,105 @@
+{
+  "name": "cc-ninja",
+  "displayName": "Chat Copier Ninja",
+  "description": "Capture, format, and save AI chat transcripts as memodef:Transcript artifacts. VS Code extension for Claude Code; companion Chrome extension and local server planned for Claude For Chrome.",
+  "version": "0.15.0",
+  "publisher": "scottconfusedgorilla",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/scottconfusedgorilla/cc-ninja"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other",
+    "Formatters"
+  ],
+  "keywords": [
+    "claude",
+    "claude-code",
+    "transcript",
+    "copier",
+    "markdown",
+    "memodef",
+    "oagp"
+  ],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "ccNinja.copyTranscript",
+        "title": "CC Ninja: Copy Transcript"
+      },
+      {
+        "command": "ccNinja.copyToClipboard",
+        "title": "CC Ninja: Copy to Clipboard"
+      },
+      {
+        "command": "ccNinja.saveAsMarkdown",
+        "title": "CC Ninja: Save as Markdown"
+      },
+      {
+        "command": "ccNinja.saveAsText",
+        "title": "CC Ninja: Save as Text"
+      },
+      {
+        "command": "ccNinja.saveAsHtml",
+        "title": "CC Ninja: Save as HTML"
+      },
+      {
+        "command": "ccNinja.previewHtml",
+        "title": "CC Ninja: Visual Preview"
+      },
+      {
+        "command": "ccNinja.copyThisSession",
+        "title": "CC Ninja: Copy This Session"
+      },
+      {
+        "command": "ccNinja.updateSessionTranscript",
+        "title": "CC Ninja: Update Session Transcript"
+      },
+      {
+        "command": "ccNinja.finalizeSessionTranscript",
+        "title": "CC Ninja: Finalize Session Transcript"
+      },
+      {
+        "command": "ccNinja.setRoleId",
+        "title": "CC Ninja: Set Role-id for This Workspace"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "when": "resourceScheme == untitled && ccNinja.isOutputTab",
+          "command": "ccNinja.copyToClipboard",
+          "group": "navigation@1"
+        },
+        {
+          "when": "resourceScheme == untitled && ccNinja.isOutputTab",
+          "command": "ccNinja.saveAsMarkdown",
+          "group": "navigation@2"
+        },
+        {
+          "when": "resourceScheme == untitled && ccNinja.isOutputTab",
+          "command": "ccNinja.saveAsText",
+          "group": "navigation@3"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src --ext ts"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.3.0",
+    "@vscode/vsce": "^3.0.0"
+  }
+}

@@ -1,142 +1,56 @@
-# Claude Code Copier Ninja (CCC Ninja)
+# Chat Copier Ninja (CC Ninja)
 
-Parse, format, and copy Claude Code conversation transcripts with one click.
+Capture, format, and save AI chat transcripts as durable, git-tracked artifacts.
 
-## Features
+CC Ninja produces `memodef:Transcript` envelope + sibling `.body.md` pairs per the [memodef-spec v0.4 proposal](https://github.com/scottconfusedgorilla/memodef-spec). Each transcript is a verbatim recording of a conversation, addressable by file path and queryable like any other file in your repo. Use them for snippet retrieval (books, presentations, citations), lost-window recovery, and audit-trail pinning against decisions documented elsewhere.
 
-- **Parse JSONL transcripts** from Claude Code sessions
-- **Clean Markdown output** with speaker labels, code blocks, and timestamps
-- **One-click copy** to clipboard
-- **Export** as `.md` or `.txt`
-- **Auto-discover** transcript files in `~/.claude/projects/`
-- **Tool call visibility** — optionally include or hide tool calls (Read, Write, Bash, etc.)
+Originally built as a VS Code extension for Claude Code (when the project was named `ccc-ninja` — Claude Code Copier Ninja). Renamed and restructured in v0.15.0 to span multiple platforms.
 
----
+## Components
 
-## Installation
+| Component | Status | Target platform |
+|---|---|---|
+| [`vscode/`](vscode/) | Shipping | Claude Code (reads `~/.claude/projects/*.jsonl`) |
+| [`claude-for-chrome/`](claude-for-chrome/) | Planned (v0.16.x) | Claude For Chrome at `claude.ai` (DOM scrape via content script) |
+| [`server/`](server/) | Planned (v0.16.x) | Localhost HTTP bridge — receives POSTs from the Chrome extension, writes git-tracked files |
 
-There are two ways to install CCC Ninja. Pick whichever feels easier.
+Each component emits the same `memodef:Transcript` artifact shape, so transcripts from different platforms compose with the rest of the memodef family (catalogs, cross-references, conformance fixtures).
 
-### Option A: Install from the `.vsix` file (easiest)
+## Why three components
 
-A `.vsix` file is just a packaged-up extension — like a `.zip` but for VS Code.
-
-1. **Find the file.** After building (or downloading), you'll have a file called `ccc-ninja-0.1.0.vsix`.
-
-2. **Open VS Code.**
-
-3. **Open the Extensions panel.** Click the square icon on the left sidebar, or press `Ctrl+Shift+X`.
-
-4. **Click the three-dot menu** (`...`) at the top of the Extensions panel.
-
-5. **Click "Install from VSIX..."**
-
-6. **Browse to the `.vsix` file**, select it, and click Install.
-
-7. **Done!** You'll see a notification that says the extension was installed. You may need to reload VS Code — it'll prompt you if so.
-
-### Option B: Install from the terminal
-
-If you prefer the command line, open a terminal and run:
+Browser sandboxing prevents the Chrome extension from writing directly to disk or shelling out to git. The local server is the bridge — same architectural shape as `gh auth login` or ngrok. The VS Code extension has filesystem access natively, so it writes directly.
 
 ```
-code --install-extension path/to/ccc-ninja-0.1.0.vsix
+Claude Code session       (VS Code workspace)
+        │
+        ▼
+~/.claude/projects/*.jsonl
+        │
+        ▼
+  vscode/ extension  ──────────────►  repo/transcripts/<role-id>/
+
+Claude For Chrome session (claude.ai)
+        │
+        ▼
+   DOM in claude.ai tab
+        │
+        ▼
+claude-for-chrome/ extension  ──POST──►  server/ (localhost)
+                                              │
+                                              ▼
+                                  repo/transcripts/<role-id>/
 ```
 
-Replace `path/to/` with wherever the file actually is. For example:
+## Quick start (VS Code extension)
 
-```
-code --install-extension S:\Projects\ccc-ninja\ccc-ninja-0.1.0.vsix
-```
+See [`vscode/README.md`](vscode/README.md) for installation, command reference, and usage.
 
-That's it. VS Code will install it and you're ready to go.
+## Project context
 
-### Option C: Install from the VS Code Marketplace (coming soon)
+- [OAGP](https://oagp.org) — the four-spec family CC Ninja's artifact shape is governed by
+- [memodef-spec](https://github.com/scottconfusedgorilla/memodef-spec) — the spec governing `memodef:Transcript` shape
+- This project is the reference capture-tool implementation cited by the v0.4 spec proposal
 
-Once published, you'll be able to search "Claude Code Copier Ninja" in the Extensions panel and click Install. Not available yet.
+## License
 
----
-
-## How to use it
-
-### Step 1: Open the Command Palette
-
-Press `Ctrl+Shift+P` (or `Cmd+Shift+P` on Mac). This opens a search bar at the top of VS Code where you can type commands.
-
-### Step 2: Type "CCC Ninja"
-
-Start typing `CCC Ninja` and you'll see **"CCC Ninja: Copy Transcript"** appear. Click it (or press Enter).
-
-### Step 3: Pick a transcript file
-
-You'll get a menu with options:
-
-- **"Browse for file..."** — opens a file picker so you can find the `.jsonl` file yourself
-- **"Find in .claude/ folder"** — the extension looks in your `~/.claude/projects/` folder and shows you all the transcript files it finds
-- **"Use current file"** — if you already have a `.jsonl` file open, this option appears too
-
-Pick one and select the file you want.
-
-### Step 4: Choose whether to include tool calls
-
-You'll get asked: **"Include tool calls?"**
-
-- **Include tool calls** — shows everything: file reads, writes, bash commands, etc.
-- **Hide tool calls** — shows only the human/assistant conversation (cleaner, shorter)
-
-### Step 5: Read, copy, or save
-
-A new tab opens with your formatted transcript. From here you can:
-
-| What you want to do | How to do it |
-|---|---|
-| **Copy everything to clipboard** | Open Command Palette (`Ctrl+Shift+P`) and run **"CCC Ninja: Copy to Clipboard"** — then paste anywhere |
-| **Save as a Markdown file** | Command Palette → **"CCC Ninja: Save as Markdown"** — picks a save location |
-| **Save as a plain text file** | Command Palette → **"CCC Ninja: Save as Text"** |
-
----
-
-## Where are my transcript files?
-
-When you use Claude Code, it saves your conversations as `.jsonl` files. They live here:
-
-```
-C:\Users\YourName\.claude\projects\<project>\<session-id>\subagents\*.jsonl
-```
-
-You don't need to memorize that path — the extension can find them for you (the "Find in .claude/ folder" option).
-
----
-
-## The status bar
-
-Look at the bottom-right corner of VS Code. You'll see **"CCC Ninja ready"**. You can click it as a shortcut to run the main command.
-
----
-
-## Uninstalling
-
-1. Open the Extensions panel (`Ctrl+Shift+X`)
-2. Find "Claude Code Copier Ninja" in the list
-3. Click **Uninstall**
-
----
-
-## Requirements
-
-- VS Code 1.85 or newer
-- Claude Code transcript files (`.jsonl` format)
-
----
-
-## Building from source
-
-If you cloned this repo and want to build it yourself:
-
-```bash
-npm install
-npm run compile
-npx @vscode/vsce package
-```
-
-This creates the `.vsix` file. Then install it using Option A or B above.
+MIT

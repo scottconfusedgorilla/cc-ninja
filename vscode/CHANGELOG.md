@@ -1,5 +1,45 @@
 # Changelog
 
+## 0.16.4 — rename "Focused Chat" → "Most Recent Chat"
+
+The 0.16.3 names overstated what focus determines. The folder name comes from the focused tab's label, but the actual *content* captured is whichever Claude JSONL was most recently modified — i.e. the chat that just had output. "Most Recent Chat" is honest to the dominant signal (JSONL recency), and reads as a verb a user would naturally invoke right after a response lands.
+
+- **Command palette:**
+  - `ccNinja.updateSessionTranscript`: "Save Focused Chat as Transcript" → **"Save Most Recent Chat"**
+  - `ccNinja.finalizeSessionTranscript`: "Finalize Focused Chat Transcript" → **"Finalize Most Recent Chat"**
+- **Status bar text:** "Save Focused Chat" → **"Save Most Recent Chat"**
+- **Tooltip:** updated to describe both signals — content from newest JSONL, folder from focused tab's label (or workspace default role-id).
+
+## 0.16.3 — rename commands to lead with "Focused Chat"
+
+The "Update Session Transcript" command name read as if there was a single ambient session being saved, but the save actually depends on which tab is focused (since v0.16.0). Renamed to make the dependency on focus visible at the call site — harder to invoke with the wrong tab focused if the command itself says "Focused Chat."
+
+- **Command palette titles:**
+  - `ccNinja.updateSessionTranscript`: "Update Session Transcript" → **"Save Focused Chat as Transcript"**
+  - `ccNinja.finalizeSessionTranscript`: "Finalize Session Transcript" → **"Finalize Focused Chat Transcript"**
+- **Status bar text:** "Update Transcript" → **"Save Focused Chat"**
+- **Status bar tooltip:** rewrites to explain the role-id-from-focused-tab behavior.
+
+Command IDs are unchanged, so any existing keybindings continue to work.
+
+## 0.16.2 — diagnostic robustness fix
+
+- Fix crash in **CC Ninja: Show Active Tab Info** when an extension's `exports` is undefined (the indent helper tried `undefined.split("\n")`). Also prints `exports (typeof)` and `exports keys` for the rare case where `exports` is a non-stringifiable object so we can still see the shape.
+- Empirical finding from running this against Anthropic.claude-code v2.1.145: `exports` is undefined, so there is no public extension API to query for tab → session mapping. Recording the result for future reference.
+
+## 0.16.1 — diagnostic extended to probe Claude Code extension API
+
+- **CC Ninja: Show Active Tab Info** now also dumps any installed extension whose id or displayName matches `/claude|anthropic/`: id, version, isActive, publisher, contributed commands (first 30), and the `exports` object returned from its `activate()`. Used to discover whether the Claude Code extension publishes an API that lets us match tab → session UUID deterministically (instead of the current "newest JSONL in folder" heuristic).
+
+## 0.16.0 — multi-Claude-tab routing + shared core/
+
+**New:**
+- Auto-detect role-id from the active Claude Code chat tab's label. When the focused tab is a Claude chat webview (identified by `viewType === "mainThreadWebview-claudeVSCodePanel"`), its tab label becomes the role-id for the capture — overriding the workspaceState fallback. Enables multiple Claude chats per workspace, each routing to its own seat folder.
+- New diagnostic command **CC Ninja: Show Active Tab Info** — dumps the active tab's label, input class, and viewType to a "CC Ninja Diagnostics" output channel. Includes the running extension version at the top so you can verify which build is loaded.
+
+**Refactor:**
+- `parseTranscript` and `formatAsMarkdown`/`formatAsPlainText` moved out of `vscode/src/` into `core/` so the new `cli/` subproject (sibling to `vscode/`, `server/`, `claude-for-chrome/`) can consume them. No behavior change for the VS Code extension; `htmlFormatter.ts` stays in vscode/ since it's vscode-flavored.
+
 ## 0.15.0 — project rename + monorepo restructure
 
 **Breaking changes:**

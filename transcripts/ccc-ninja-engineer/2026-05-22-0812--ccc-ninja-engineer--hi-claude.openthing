@@ -1,0 +1,26 @@
+{
+  "catdef": "1.4",
+  "memodef": "0.4.0",
+  "type": "memodef:Transcript",
+  "participants": [
+    {
+      "position": "ccc-ninja-engineer",
+      "session_arc": "Opus 4.7, claude-for-chrome session sidepanel.html"
+    },
+    {
+      "position": "director",
+      "identity": "scott@confusedgorilla.com"
+    }
+  ],
+  "started": "2026-05-22T12:12:28.147Z",
+  "subject": "Hi Claude",
+  "transport": "claude-for-chrome",
+  "capture_tool": "cc-ninja-server@0.1.0",
+  "capture_format": "markdown",
+  "body_ref": "2026-05-22-0812--ccc-ninja-engineer--hi-claude.body.md",
+  "metadata": {
+    "redaction_status": "raw",
+    "retention_policy": "permanent",
+    "source_url": "chrome-extension://fcoeoabgfenejglbffodgkkbkcdhcgfn/sidepanel.html?tabId=473391150"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "catdef": "1.4",
+  "memodef": "0.3.0",
+  "type": "memodef:Memo",
+
+  "from": "ccc-ninja-engineer",
+  "to": "file",
+  "subject": "Claude For Chrome capture — closeout and learnings (Sidepanel via Chrome Snippets)",
+  "sent": "2026-05-22T09:07:00-04:00",
+  "body_ref": "2026-05-22-0907--ccc-ninja-engineer--file--c4c-capture-closeout-and-learnings.body.md",
+  "body": "End-of-session closeout for the Claude For Chrome capture work on 2026-05-22. Three components shipped: core/ (shared envelope emitter), server/ (Node HTTP bridge with /transcript and /relay endpoints), claude-for-chrome/ (MV3 extension for claude.ai-in-a-tab + DevTools Snippet for the Anthropic Sidepanel). Five load-bearing learnings recorded: (1) Chrome's cross-extension isolation blocks scripting/debugger access to other extensions' pages — only DevTools console is left open as a seam, (2) Sidepanel CSP blocks direct localhost fetch, but not navigation, so window.open to a relay page with hash-payload works, (3) of three capture paths considered, the Chrome Snippets path was the right pragmatic choice over chrome.debugger (blocked) and --remote-debugging-port (security tradeoff), (4) DOM selectors documented by brother-Claude two days prior were still accurate, (5) source_url-based update-in-place semantics work cleanly. Outstanding cosmetic items: session_arc misses tabId, subject is frozen across in-place updates. Full design rationale, rejected alternatives, and follow-up items in the sibling .body.md.",
+
+  "metadata": {
+    "sender_session_arc": "claude-opus-4-7-1m, vscode-claude-code session 4cbfcaaf-4dc7-4038-9c60-5b90550b3e51 (cc-ninja-strategist + ccc-ninja-engineer alternating)",
+    "related_transcripts": [
+      "transcripts/cc-ninja-strategist/2026-05-21-2122--cc-ninja-strategist--hi-claude-we-were-working-one-something-but-we-can.openthing",
+      "transcripts/ccc-ninja-engineer/2026-05-22-0812--ccc-ninja-engineer--hi-claude.openthing"
+    ],
+    "related_prior_design": "notes/ccc-ninja-engineer/2026-05-20-1840--ccc-ninja-engineer--file--transcript-session-boundary-design.openthing",
+    "version_shipped": "v0.16.0 (untagged at time of writing)"
+  }
+}

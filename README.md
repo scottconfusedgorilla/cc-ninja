@@ -10,9 +10,10 @@ Originally built as a VS Code extension for Claude Code (when the project was na
 
 | Component | Status | Target platform |
 |---|---|---|
+| [`core/`](core/) | Shipping (v0.16.0) | Transport-agnostic envelope emitter shared by the other components |
 | [`vscode/`](vscode/) | Shipping | Claude Code (reads `~/.claude/projects/*.jsonl`) |
-| [`claude-for-chrome/`](claude-for-chrome/) | Planned (v0.16.x) | Claude For Chrome at `claude.ai` (DOM scrape via content script) |
-| [`server/`](server/) | Planned (v0.16.x) | Localhost HTTP bridge — receives POSTs from the Chrome extension, writes git-tracked files |
+| [`server/`](server/) | Shipping (v0.16.0) | Localhost HTTP bridge — receives POSTs from the Chrome extension, writes git-tracked files |
+| [`claude-for-chrome/`](claude-for-chrome/) | Shipping (v0.16.0) | Claude For Chrome at `claude.ai` (DOM scrape via content script) |
 
 Each component emits the same `memodef:Transcript` artifact shape, so transcripts from different platforms compose with the rest of the memodef family (catalogs, cross-references, conformance fixtures).
 

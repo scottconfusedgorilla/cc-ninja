@@ -4,8 +4,8 @@ import * as fs from "fs";
 import * as os from "os";
 import { execFile } from "child_process";
 import { promisify } from "util";
-import { parseTranscript } from "./parser";
-import { formatAsMarkdown, formatAsPlainText } from "./formatter";
+import { parseTranscript } from "./core";
+import { formatAsMarkdown, formatAsPlainText } from "./core";
 import { formatAsHtml } from "./htmlFormatter";
 import { emitTranscript } from "./transcriptEmitter";
 
@@ -25,7 +25,7 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.StatusBarAlignment.Right,
     100
   );
-  statusBarItem.text = "$(notebook) Update Transcript";
+  statusBarItem.text = "$(notebook) Save Most Recent Chat";
   statusBarItem.command = "ccNinja.updateSessionTranscript";
   refreshStatusBarTooltip(context);
   statusBarItem.show();
@@ -72,8 +72,120 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand(
       "ccNinja.setRoleId",
       () => setRoleIdCommand(context)
+    ),
+    vscode.commands.registerCommand(
+      "ccNinja.showActiveTabInfo",
+      () => showActiveTabInfoCommand()
     )
   );
+}
+
+let diagnosticChannel: vscode.OutputChannel | undefined;
+
+async function showActiveTabInfoCommand(): Promise<void> {
+  if (!diagnosticChannel) {
+    diagnosticChannel = vscode.window.createOutputChannel("CC Ninja Diagnostics");
+  }
+  diagnosticChannel.clear();
+  diagnosticChannel.show(true);
+
+  // Always print the running version first so the user can verify which
+  // build is loaded. (MUST per cc-ninja-versioning-discipline memory.)
+  const ext = vscode.extensions.getExtension("scottconfusedgorilla.cc-ninja");
+  const version = (ext?.packageJSON?.version as string | undefined) ?? "(unknown)";
+  diagnosticChannel.appendLine(`cc-ninja extension version: ${version}`);
+  diagnosticChannel.appendLine("");
+
+  const activeTab = vscode.window.tabGroups.activeTabGroup.activeTab;
+  diagnosticChannel.appendLine("=== ACTIVE TAB ===");
+  diagnosticChannel.appendLine(describeTab(activeTab));
+  diagnosticChannel.appendLine("");
+  diagnosticChannel.appendLine("=== ALL TABS (across all groups) ===");
+  for (const group of vscode.window.tabGroups.all) {
+    diagnosticChannel.appendLine(`-- group ${group.viewColumn} (isActive=${group.isActive}) --`);
+    for (const tab of group.tabs) {
+      diagnosticChannel.appendLine(describeTab(tab));
+    }
+  }
+
+  diagnosticChannel.appendLine("");
+  diagnosticChannel.appendLine("=== CLAUDE / ANTHROPIC EXTENSIONS ===");
+  const matches = vscode.extensions.all.filter((e) => {
+    const id = e.id.toLowerCase();
+    const name = String(e.packageJSON?.displayName ?? "").toLowerCase();
+    return /claude|anthropic/.test(id) || /claude|anthropic/.test(name);
+  });
+  if (matches.length === 0) {
+    diagnosticChannel.appendLine("  (no installed extensions matched 'claude' or 'anthropic')");
+  }
+  for (const ext of matches) {
+    diagnosticChannel.appendLine(`-- ${ext.id} --`);
+    diagnosticChannel.appendLine(`  displayName:    ${ext.packageJSON?.displayName ?? "(unset)"}`);
+    diagnosticChannel.appendLine(`  version:        ${ext.packageJSON?.version ?? "(unset)"}`);
+    diagnosticChannel.appendLine(`  isActive:       ${ext.isActive}`);
+    diagnosticChannel.appendLine(`  publisher:      ${ext.packageJSON?.publisher ?? "(unset)"}`);
+    const cmds = ext.packageJSON?.contributes?.commands;
+    const cmdCount = Array.isArray(cmds) ? cmds.length : 0;
+    diagnosticChannel.appendLine(`  contributed commands: ${cmdCount}`);
+    if (Array.isArray(cmds)) {
+      for (const c of cmds.slice(0, 30)) {
+        diagnosticChannel.appendLine(`    - ${c.command}  ${c.title ? "— " + c.title : ""}`);
+      }
+      if (cmds.length > 30) {
+        diagnosticChannel.appendLine(`    ... (${cmds.length - 30} more)`);
+      }
+    }
+    diagnosticChannel.appendLine(`  exports (typeof): ${typeof ext.exports}`);
+    diagnosticChannel.appendLine(`  exports:`);
+    diagnosticChannel.appendLine(indent(safeStringify(ext.exports) ?? "(undefined)", 4));
+    if (ext.exports && typeof ext.exports === "object") {
+      const keys = Object.keys(ext.exports as object);
+      diagnosticChannel.appendLine(`  exports keys: [${keys.join(", ")}]`);
+    }
+  }
+}
+
+function indent(text: string | undefined | null, spaces: number): string {
+  if (text === undefined || text === null) return " ".repeat(spaces) + "(undefined)";
+  const pad = " ".repeat(spaces);
+  return text
+    .split("\n")
+    .map((l) => pad + l)
+    .join("\n");
+}
+
+function describeTab(tab: vscode.Tab | undefined): string {
+  if (!tab) return "(no tab)";
+  const input = tab.input as unknown;
+  const inputClass = input?.constructor?.name ?? typeof input;
+  const inputDump = safeStringify(input);
+  return [
+    `  label: ${JSON.stringify(tab.label)}`,
+    `  isActive: ${tab.isActive}  isDirty: ${tab.isDirty}  isPinned: ${tab.isPinned}`,
+    `  input class: ${inputClass}`,
+    `  input: ${inputDump}`,
+  ].join("\n");
+}
+
+function safeStringify(value: unknown): string {
+  const seen = new WeakSet<object>();
+  try {
+    return JSON.stringify(
+      value,
+      (_key, val) => {
+        if (val instanceof vscode.Uri) return val.toString();
+        if (typeof val === "object" && val !== null) {
+          if (seen.has(val)) return "[circular]";
+          seen.add(val);
+        }
+        if (typeof val === "function") return "[fn]";
+        return val;
+      },
+      2
+    );
+  } catch (err) {
+    return `(unserializable: ${err instanceof Error ? err.message : String(err)})`;
+  }
 }
 
 async function setRoleIdCommand(context: vscode.ExtensionContext) {
@@ -107,7 +219,7 @@ async function copyTranscriptCommand(context: vscode.ExtensionContext) {
       vscode.window.showWarningMessage(
         "CC Ninja: No messages found in the selected file."
       );
-      statusBarItem.text = "$(notebook) Update Transcript";
+      statusBarItem.text = "$(notebook) Save Most Recent Chat";
       return;
     }
 
@@ -140,7 +252,7 @@ async function copyTranscriptCommand(context: vscode.ExtensionContext) {
     );
 
     if (!format) {
-      statusBarItem.text = "$(notebook) Update Transcript";
+      statusBarItem.text = "$(notebook) Save Most Recent Chat";
       return;
     }
 
@@ -161,7 +273,7 @@ async function copyTranscriptCommand(context: vscode.ExtensionContext) {
     vscode.window.showErrorMessage(`CC Ninja: Failed to parse — ${msg}`);
   }
 
-  statusBarItem.text = "$(notebook) Update Transcript";
+  statusBarItem.text = "$(notebook) Save Most Recent Chat";
 }
 
 async function copyThisSessionCommand(context: vscode.ExtensionContext) {
@@ -173,7 +285,7 @@ async function copyThisSessionCommand(context: vscode.ExtensionContext) {
       vscode.window.showWarningMessage(
         "CC Ninja: No Claude Code transcripts found."
       );
-      statusBarItem.text = "$(notebook) Update Transcript";
+      statusBarItem.text = "$(notebook) Save Most Recent Chat";
       return;
     }
 
@@ -186,7 +298,7 @@ async function copyThisSessionCommand(context: vscode.ExtensionContext) {
       vscode.window.showWarningMessage(
         "CC Ninja: No messages found in the current session."
       );
-      statusBarItem.text = "$(notebook) Update Transcript";
+      statusBarItem.text = "$(notebook) Save Most Recent Chat";
       return;
     }
 
@@ -218,7 +330,7 @@ async function copyThisSessionCommand(context: vscode.ExtensionContext) {
     vscode.window.showErrorMessage(`CC Ninja: Failed to parse — ${msg}`);
   }
 
-  statusBarItem.text = "$(notebook) Update Transcript";
+  statusBarItem.text = "$(notebook) Save Most Recent Chat";
 }
 
 async function findNewestTranscript(): Promise<vscode.Uri | undefined> {
@@ -846,13 +958,38 @@ function refreshStatusBarTooltip(context: vscode.ExtensionContext): void {
     statusBarItem.tooltip = `Click to update transcript\nLast captured: ${relPath}`;
   } else {
     statusBarItem.tooltip =
-      "Click to update transcript — captures the current Claude Code session as a memodef:Transcript pair (envelope + sibling .body.md)";
+      "Click to save the most recently active Claude chat as a memodef:Transcript pair (envelope + sibling .body.md). Content comes from the newest JSONL in the workspace; the destination folder is named after the currently focused tab (or the workspace default role-id if no Claude tab is focused).";
   }
+}
+
+/**
+ * When the currently focused tab is a Claude Code chat webview, return its
+ * label as the role-id — letting the user have multiple chats per workspace
+ * (one seat per tab) without the workspaceState-stored role-id getting in
+ * the way. Returns undefined when the active tab is not a Claude chat or
+ * when the label doesn't look like a valid role-id slug.
+ *
+ * Detected via `tab.input.viewType === "mainThreadWebview-claudeVSCodePanel"`
+ * which is the stable identifier the Claude Code extension assigns its
+ * chat panels. (The class name on `tab.input` is minified to `ym` in
+ * production VS Code builds, so we can't useinstanceof here.)
+ */
+function getRoleIdFromActiveClaudeTab(): string | undefined {
+  const tab = vscode.window.tabGroups.activeTabGroup?.activeTab;
+  if (!tab) return undefined;
+  const input = tab.input as { viewType?: string } | undefined;
+  if (input?.viewType !== "mainThreadWebview-claudeVSCodePanel") return undefined;
+  const label = tab.label?.trim();
+  if (!label) return undefined;
+  if (!/^[a-z0-9][a-z0-9-]*$/.test(label)) return undefined;
+  return label;
 }
 
 async function getOrPromptRoleId(
   context: vscode.ExtensionContext
 ): Promise<string | undefined> {
+  const fromTab = getRoleIdFromActiveClaudeTab();
+  if (fromTab) return fromTab;
   const stored = context.workspaceState.get<string>("ccNinja.roleId");
   if (stored) return stored;
 

@@ -1,0 +1,27 @@
+{
+  "catdef": "1.4",
+  "memodef": "0.3.0",
+  "type": "memodef:Memo",
+
+  "from": "ccc-ninja-engineer",
+  "to": "file",
+  "subject": "Claude Desktop (Electron) is not directly capturable \u2014 only via its claude.ai web mirror",
+  "sent": "2026-05-22T21:30:00-04:00",
+  "body_ref": "2026-05-22-2130--ccc-ninja-engineer--file--claude-desktop-electron-capture-gap.body.md",
+  "body": "Surface-coverage finding from a 2026-05-22 evening session conducted IN the Claude desktop app (not Claude Code, not Claude-for-Chrome). Three results, all confirmed empirically: (1) Claude Desktop is a thin Electron shell over the claude.ai web app and keeps NO local conversation store \u2014 IndexedDB holds only the in-progress TipTap message draft, autosaved per keystroke; sent messages and assistant turns live server-side, fetched per-load. So the vscode/ JSONL-read path has nothing to read for desktop. (2) Desktop DevTools is locked (Ctrl+Shift+I does nothing), so the shipped Chrome Snippets path (option B from the C4C closeout) does NOT transfer \u2014 the one seam Chrome leaves open is closed in the Electron build. (3) Therefore the only capture route for a desktop conversation is INDIRECT: the conversation is server-side, so open the same conversation in claude.ai in real Chrome and capture it with the already-shipped Sidepanel/in-tab path. Net: the desktop app itself is uncapturable; its web mirror is capturable with existing v0.16.0 tooling. This answers the Director's sidebar question 'can we get transcripts from Claude Desktop' \u2014 not directly, yes via the web mirror. Corrects a stale public README that still lists the Chrome path as Planned; it shipped.",
+
+  "metadata": {
+    "sender_session_arc": "claude-opus-4-7, Claude desktop app session, 2026-05-22 evening (swpersonal-bootstrap-helper chair; cross-filed to ccc-ninja-engineer notes as product finding). NOTE: this note authored by a desktop-app Claude with Filesystem-extension write access; not a Claude Code session, hence no JSONL and no auto-capture of the originating session.",
+    "related_prior_design": "notes/ccc-ninja-engineer/2026-05-22-0907--ccc-ninja-engineer--file--c4c-capture-closeout-and-learnings.openthing",
+    "surfaces_compared": [
+      "Claude Code (vscode/) \u2014 captures via ~/.claude/projects/*.jsonl, shipping",
+      "Claude-for-Chrome at claude.ai (in-tab + Sidepanel Snippet) \u2014 captures via DOM scrape + relay, shipped v0.16.0",
+      "Claude desktop app (Electron) \u2014 NOT directly capturable: no local store, DevTools locked; capture only via its claude.ai web mirror in Chrome"
+    ],
+    "follow_ups": [
+      "Confirm: does opening a desktop-originated conversation in claude.ai-in-Chrome reliably expose the full history to the Sidepanel/in-tab extractor? (Expected yes \u2014 server-side conversation \u2014 but not yet end-to-end tested for a desktop-originated thread.)",
+      "Update the public cc-ninja README: the Chrome path is shipped (v0.16.0), not Planned (v0.16.x).",
+      "Consider documenting the desktop-via-web-mirror workflow as the supported answer for desktop users, since direct desktop capture appears to need Anthropic-side cooperation (same conclusion as auto-capture-on-tab-close)."
+    ]
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "catdef": "1.4",
+  "memodef": "0.4.0",
+  "type": "memodef:Transcript",
+  "participants": [
+    {
+      "position": "ccc-ninja-engineer",
+      "session_arc": "Opus 4.7, claude-for-chrome session sidepanel.html"
+    },
+    {
+      "position": "director",
+      "identity": "scott@confusedgorilla.com"
+    }
+  ],
+  "started": "2026-05-22T13:11:15.508Z",
+  "subject": "Here's the context. And I just tried closing the Claude for Chrome sidebar, a...",
+  "transport": "claude-for-chrome",
+  "capture_tool": "cc-ninja-server@0.1.0",
+  "capture_format": "markdown",
+  "body_ref": "2026-05-22-0911--ccc-ninja-engineer--here-s-the-context-and-i-just-tried-closing-the-cl.body.md",
+  "metadata": {
+    "redaction_status": "raw",
+    "retention_policy": "permanent",
+    "source_url": "chrome-extension://fcoeoabgfenejglbffodgkkbkcdhcgfn/sidepanel.html?tabId=473390867"
+  }
+}

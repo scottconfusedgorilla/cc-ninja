@@ -2,8 +2,8 @@
  * Formats parsed messages as styled HTML that mimics the Claude Code VS Code panel.
  */
 
-import { ParsedMessage } from "./parser";
-import { FormatOptions } from "./formatter";
+import { ParsedMessage } from "./core";
+import { FormatOptions } from "./core";
 
 const defaultOptions: FormatOptions = {
   includeToolCalls: true,

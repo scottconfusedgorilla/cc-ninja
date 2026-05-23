@@ -129,6 +129,20 @@ Look at the bottom-right corner of VS Code. You'll see **"CC Ninja ready"**. You
 
 ---
 
+## Known limitations
+
+### Multiple Claude chats in one workspace: save the tab you just typed in
+
+Since v0.16.0, CC Ninja auto-detects the role-id from the active Claude chat tab's label — so if you rename your tabs (e.g. `caliper-strategist` and `caliper-engineer`) you can have multiple chats in one workspace, each routing to its own seat folder. The role-id picks the *right folder*.
+
+The catch is on the JSONL side: when several chats are active in one workspace, Claude Code writes a JSONL per chat (all in the same `~/.claude/projects/<encoded>/` directory). CC Ninja currently picks the *most recently modified* JSONL, on the theory that it's the one belonging to the tab you just interacted with. Almost always true — but if you focus a tab without typing in it and immediately save, you'll capture the *previous* tab's JSONL into the *current* tab's seat folder.
+
+**Workaround:** type a quick message in the tab before saving, so its JSONL becomes the newest. Or save right after the assistant finishes a response.
+
+We investigated more deterministic options (Claude Code public API, filesystem-watcher-based mapping) and decided the user-visible cost wasn't worth the engineering. The current behavior is documented, not buggy.
+
+---
+
 ## Building from source
 
 If you cloned this repo and want to build it yourself:

@@ -1,0 +1,26 @@
+{
+  "catdef": "1.4",
+  "memodef": "0.4.0",
+  "type": "memodef:Transcript",
+  "participants": [
+    {
+      "position": "ccc-ninja-engineer",
+      "session_arc": "Opus 4.7, claude-for-chrome session 37a1f261-fbab-4c0e-b975-261618ee5bdc"
+    },
+    {
+      "position": "director",
+      "identity": "scott@confusedgorilla.com"
+    }
+  ],
+  "started": "2026-05-22T11:50:16.558Z",
+  "subject": "Project and position configuration - Claude",
+  "transport": "claude-for-chrome",
+  "capture_tool": "cc-ninja-server@0.1.0",
+  "capture_format": "markdown",
+  "body_ref": "2026-05-22-0750--ccc-ninja-engineer--project-and-position-configuration-claude.body.md",
+  "metadata": {
+    "redaction_status": "raw",
+    "retention_policy": "permanent",
+    "source_url": "https://claude.ai/chat/37a1f261-fbab-4c0e-b975-261618ee5bdc"
+  }
+}

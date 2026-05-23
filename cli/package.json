@@ -1,0 +1,19 @@
+{
+  "name": "cc-ninja-cli",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Standalone CLI that reads Claude Code JSONL sessions and emits memodef:Transcript artifacts. The editor-agnostic sibling of the VS Code extension — works from Claude Code CLI, the Claude Code desktop GUI, or anywhere else that writes to ~/.claude/projects/.",
+  "main": "out/index.js",
+  "bin": {
+    "cc-ninja-capture": "out/index.js"
+  },
+  "scripts": {
+    "sync-core": "node -e \"const fs=require('fs');fs.rmSync('src/core',{recursive:true,force:true});fs.cpSync('../core/src','src/core',{recursive:true,force:true})\"",
+    "build": "npm run sync-core && tsc -p ./",
+    "start": "node out/index.js"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.0"
+  }
+}

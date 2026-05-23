@@ -1,0 +1,26 @@
+{
+  "catdef": "1.4",
+  "memodef": "0.4.0",
+  "type": "memodef:Transcript",
+  "participants": [
+    {
+      "position": "cc-ninja-strategist",
+      "session_arc": "claude-opus-4-7, vscode-claude-code session 4cbfcaaf-4dc7-4038-9c60-5b90550b3e51"
+    },
+    {
+      "position": "director",
+      "identity": "scott@confusedgorilla.com"
+    }
+  ],
+  "started": "2026-05-22T01:22:47.277Z",
+  "subject": "Hi Claude -- we were working one something but we canged the name of the repo...",
+  "transport": "vscode-claude-code",
+  "capture_tool": "ccc-ninja@0.15.0",
+  "capture_format": "markdown",
+  "body_ref": "2026-05-21-2122--cc-ninja-strategist--hi-claude-we-were-working-one-something-but-we-can.body.md",
+  "metadata": {
+    "redaction_status": "raw",
+    "retention_policy": "permanent",
+    "source_jsonl": "c:/Users/edsby/.claude/projects/s--Projects-cc-ninja/4cbfcaaf-4dc7-4038-9c60-5b90550b3e51.jsonl"
+  }
+}

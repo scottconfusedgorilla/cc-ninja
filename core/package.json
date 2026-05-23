@@ -1,0 +1,12 @@
+{
+  "name": "@cc-ninja/core",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Transport-agnostic memodef:Transcript envelope emitter shared by the VS Code extension and the local HTTP server.",
+  "main": "out/index.js",
+  "types": "out/index.d.ts",
+  "scripts": {
+    "build": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  }
+}

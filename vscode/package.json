@@ -2,7 +2,7 @@
   "name": "cc-ninja",
   "displayName": "Chat Copier Ninja",
   "description": "Capture, format, and save AI chat transcripts as memodef:Transcript artifacts. VS Code extension for Claude Code; companion Chrome extension and local server planned for Claude For Chrome.",
-  "version": "0.15.0",
+  "version": "0.16.4",
   "publisher": "scottconfusedgorilla",
   "license": "MIT",
   "repository": {
@@ -59,15 +59,19 @@
       },
       {
         "command": "ccNinja.updateSessionTranscript",
-        "title": "CC Ninja: Update Session Transcript"
+        "title": "CC Ninja: Save Most Recent Chat"
       },
       {
         "command": "ccNinja.finalizeSessionTranscript",
-        "title": "CC Ninja: Finalize Session Transcript"
+        "title": "CC Ninja: Finalize Most Recent Chat"
       },
       {
         "command": "ccNinja.setRoleId",
         "title": "CC Ninja: Set Role-id for This Workspace"
+      },
+      {
+        "command": "ccNinja.showActiveTabInfo",
+        "title": "CC Ninja: Show Active Tab Info (Diagnostic)"
       }
     ],
     "menus": {
@@ -92,8 +96,9 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
+    "sync-core": "node -e \"const fs=require('fs');fs.rmSync('src/core',{recursive:true,force:true});fs.cpSync('../core/src','src/core',{recursive:true,force:true})\"",
+    "compile": "npm run sync-core && tsc -p ./",
+    "watch": "npm run sync-core && tsc -watch -p ./",
     "lint": "eslint src --ext ts"
   },
   "devDependencies": {

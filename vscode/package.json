@@ -2,7 +2,7 @@
   "name": "cc-ninja",
   "displayName": "Chat Copier Ninja",
   "description": "Capture, format, and save AI chat transcripts as memodef:Transcript artifacts. VS Code extension for Claude Code; companion Chrome extension and local server planned for Claude For Chrome.",
-  "version": "0.16.4",
+  "version": "0.16.6",
   "publisher": "scottconfusedgorilla",
   "license": "MIT",
   "repository": {
@@ -31,47 +31,43 @@
     "commands": [
       {
         "command": "ccNinja.copyTranscript",
-        "title": "CC Ninja: Copy Transcript"
+        "title": "CCNinja: Copy Transcript"
       },
       {
         "command": "ccNinja.copyToClipboard",
-        "title": "CC Ninja: Copy to Clipboard"
+        "title": "CCNinja: Copy to Clipboard"
       },
       {
         "command": "ccNinja.saveAsMarkdown",
-        "title": "CC Ninja: Save as Markdown"
+        "title": "CCNinja: Save as Markdown"
       },
       {
         "command": "ccNinja.saveAsText",
-        "title": "CC Ninja: Save as Text"
+        "title": "CCNinja: Save as Text"
       },
       {
         "command": "ccNinja.saveAsHtml",
-        "title": "CC Ninja: Save as HTML"
+        "title": "CCNinja: Save as HTML"
       },
       {
         "command": "ccNinja.previewHtml",
-        "title": "CC Ninja: Visual Preview"
-      },
-      {
-        "command": "ccNinja.copyThisSession",
-        "title": "CC Ninja: Copy This Session"
+        "title": "CCNinja: Visual Preview"
       },
       {
         "command": "ccNinja.updateSessionTranscript",
-        "title": "CC Ninja: Save Most Recent Chat"
+        "title": "CCNinja: Save Most Recent Chat"
       },
       {
         "command": "ccNinja.finalizeSessionTranscript",
-        "title": "CC Ninja: Finalize Most Recent Chat"
+        "title": "CCNinja: Finalize Most Recent Chat"
       },
       {
         "command": "ccNinja.setRoleId",
-        "title": "CC Ninja: Set Role-id for This Workspace"
+        "title": "CCNinja: Set Role-id for This Workspace"
       },
       {
         "command": "ccNinja.showActiveTabInfo",
-        "title": "CC Ninja: Show Active Tab Info (Diagnostic)"
+        "title": "CCNinja: Show Active Tab Info (Diagnostic)"
       }
     ],
     "menus": {

@@ -1,0 +1,24 @@
+{
+  "catdef": "1.4",
+  "memodef": "0.3.0",
+  "type": "memodef:Memo",
+
+  "from": "ccc-ninja-engineer",
+  "to": "file",
+  "subject": "cc-ninja-cli + multi-Claude-tab routing — closeout and learnings",
+  "sent": "2026-05-23T20:54:00-04:00",
+  "body_ref": "2026-05-23-2054--ccc-ninja-engineer--file--cli-and-multi-tab-routing-closeout.body.md",
+  "body": "End-of-session closeout for 2026-05-23. Shipped: (1) standalone cc-ninja-capture CLI (fourth capture transport, covers Claude Code from CLI / desktop GUI / any Claude-Code-aware editor, includes --include-subagents for nested traces), (2) parser+formatter promoted from vscode/ to core/, (3) VS Code extension v0.16.0–v0.16.4 with multi-Claude-tab routing (auto-detect role-id from active tab label via viewType==='mainThreadWebview-claudeVSCodePanel'), and (4) versioning-discipline rule established as a MUST. Five load-bearing learnings recorded: (1) filesystem-read works for Claude Code but not for Claude Desktop (the Electron app stores no conversation history locally — only the user's draft), (2) tab-label-as-role-id is solvable but tab-to-JSONL matching isn't (Anthropic.claude-code v2.1.145 publishes exports:undefined; Director chose option D / accept the gap), (3) name actions after the dominant signal (Director caught my 'Save Focused Chat' misnaming — content comes from JSONL recency, not focus; renamed to 'Save Most Recent Chat'), (4) gitignore build-copy destinations from day one (almost committed cli/src/core/ and server/src/core/ before catching it), (5) diagnostics MUST surface the version. Outstanding items minor / cosmetic. Full design rationale, rejected alternatives, and follow-ups in the sibling .body.md. Pushed as commit bfa4bac.",
+
+  "metadata": {
+    "sender_session_arc": "claude-opus-4-7-1m, vscode-claude-code session 4cbfcaaf-4dc7-4038-9c60-5b90550b3e51 (cc-ninja-strategist + ccc-ninja-engineer alternating; logical seat = ccc-ninja-engineer)",
+    "related_prior_closeout": "notes/ccc-ninja-engineer/2026-05-22-0907--ccc-ninja-engineer--file--c4c-capture-closeout-and-learnings.openthing",
+    "related_design_gap": "notes/ccc-ninja-engineer/2026-05-22-2130--ccc-ninja-engineer--file--claude-desktop-electron-capture-gap.openthing",
+    "related_memory_rules": [
+      "cc-ninja-versioning-discipline (MUST: bump on every release, surface version in diagnostics)",
+      "multi-claude-tab-jsonl-gap (accepted limitation, option D)"
+    ],
+    "version_shipped": "vscode v0.16.4; cli v0.1.0 (first); core/server unchanged from prior session",
+    "commit": "bfa4bac"
+  }
+}

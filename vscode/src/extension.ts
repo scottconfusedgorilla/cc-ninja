@@ -58,10 +58,6 @@ export function activate(context: vscode.ExtensionContext) {
       () => showHtmlPreview(context)
     ),
     vscode.commands.registerCommand(
-      "ccNinja.copyThisSession",
-      () => copyThisSessionCommand(context)
-    ),
-    vscode.commands.registerCommand(
       "ccNinja.updateSessionTranscript",
       () => updateSessionTranscriptCommand(context)
     ),
@@ -84,7 +80,7 @@ let diagnosticChannel: vscode.OutputChannel | undefined;
 
 async function showActiveTabInfoCommand(): Promise<void> {
   if (!diagnosticChannel) {
-    diagnosticChannel = vscode.window.createOutputChannel("CC Ninja Diagnostics");
+    diagnosticChannel = vscode.window.createOutputChannel("CCNinja Diagnostics");
   }
   diagnosticChannel.clear();
   diagnosticChannel.show(true);
@@ -195,7 +191,7 @@ async function setRoleIdCommand(context: vscode.ExtensionContext) {
   if (fresh) {
     const change = existing ? ` (was: ${existing})` : "";
     vscode.window.showInformationMessage(
-      `CC Ninja: role-id set to ${fresh}${change}`
+      `CCNinja: role-id set to ${fresh}${change}`
     );
   } else if (existing) {
     // User cancelled; restore the prior value rather than orphaning state
@@ -207,7 +203,7 @@ async function copyTranscriptCommand(context: vscode.ExtensionContext) {
   const file = await pickTranscriptFile();
   if (!file) return;
 
-  statusBarItem.text = "$(sync~spin) CC Ninja parsing...";
+  statusBarItem.text = "$(sync~spin) CCNinja parsing...";
 
   try {
     const raw = Buffer.from(
@@ -217,7 +213,7 @@ async function copyTranscriptCommand(context: vscode.ExtensionContext) {
 
     if (messages.length === 0) {
       vscode.window.showWarningMessage(
-        "CC Ninja: No messages found in the selected file."
+        "CCNinja: No messages found in the selected file."
       );
       statusBarItem.text = "$(notebook) Save Most Recent Chat";
       return;
@@ -266,68 +262,11 @@ async function copyTranscriptCommand(context: vscode.ExtensionContext) {
       (m) => m.role === "user" || m.role === "assistant"
     ).length;
     vscode.window.showInformationMessage(
-      `CC Ninja: Parsed ${count} messages.`
+      `CCNinja: Parsed ${count} messages.`
     );
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
-    vscode.window.showErrorMessage(`CC Ninja: Failed to parse — ${msg}`);
-  }
-
-  statusBarItem.text = "$(notebook) Save Most Recent Chat";
-}
-
-async function copyThisSessionCommand(context: vscode.ExtensionContext) {
-  statusBarItem.text = "$(sync~spin) CC Ninja parsing...";
-
-  try {
-    const file = await findNewestTranscript();
-    if (!file) {
-      vscode.window.showWarningMessage(
-        "CC Ninja: No Claude Code transcripts found."
-      );
-      statusBarItem.text = "$(notebook) Save Most Recent Chat";
-      return;
-    }
-
-    const raw = Buffer.from(
-      await vscode.workspace.fs.readFile(file)
-    ).toString("utf-8");
-    const messages = parseTranscript(raw);
-
-    if (messages.length === 0) {
-      vscode.window.showWarningMessage(
-        "CC Ninja: No messages found in the current session."
-      );
-      statusBarItem.text = "$(notebook) Save Most Recent Chat";
-      return;
-    }
-
-    const mdOpts = {
-      includeToolCalls: true,
-      includeToolResults: false,
-      includeTimestamps: true,
-    };
-
-    lastFormattedMarkdown = formatAsMarkdown(messages, mdOpts);
-    lastFormattedText = formatAsPlainText(messages);
-    lastFormattedHtml = formatAsHtml(messages, {
-      includeToolCalls: true,
-      includeToolResults: true,
-      includeTimestamps: true,
-    });
-
-    showHtmlPreview(context);
-
-    const count = messages.filter(
-      (m) => m.role === "user" || m.role === "assistant"
-    ).length;
-    const title = await getSessionTitle(file.fsPath);
-    vscode.window.showInformationMessage(
-      `CC Ninja: "${title}" — ${count} messages.`
-    );
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : String(err);
-    vscode.window.showErrorMessage(`CC Ninja: Failed to parse — ${msg}`);
+    vscode.window.showErrorMessage(`CCNinja: Failed to parse — ${msg}`);
   }
 
   statusBarItem.text = "$(notebook) Save Most Recent Chat";
@@ -386,7 +325,7 @@ async function findNewestTranscript(): Promise<vscode.Uri | undefined> {
 function showHtmlPreview(context: vscode.ExtensionContext) {
   if (!lastFormattedHtml) {
     vscode.window.showWarningMessage(
-      "CC Ninja: No transcript loaded. Run 'CC Ninja: Copy Transcript' first."
+      "CCNinja: No transcript loaded. Run 'CCNinja: Copy Transcript' first."
     );
     return;
   }
@@ -558,7 +497,7 @@ async function findClaudeTranscripts(): Promise<vscode.Uri | undefined> {
 
     if (files.length === 0) {
       vscode.window.showWarningMessage(
-        "CC Ninja: No .jsonl files found in ~/.claude/projects/"
+        "CCNinja: No .jsonl files found in ~/.claude/projects/"
       );
       return browseForFile();
     }
@@ -660,12 +599,12 @@ function relativeAge(now: number, mtime: number): string {
 async function copyToClipboardCommand() {
   if (!lastFormattedMarkdown) {
     vscode.window.showWarningMessage(
-      "CC Ninja: No transcript loaded. Run 'CC Ninja: Copy Transcript' first."
+      "CCNinja: No transcript loaded. Run 'CCNinja: Copy Transcript' first."
     );
     return;
   }
   await vscode.env.clipboard.writeText(lastFormattedMarkdown);
-  vscode.window.showInformationMessage("CC Ninja: Copied to clipboard!");
+  vscode.window.showInformationMessage("CCNinja: Copied to clipboard!");
 }
 
 async function saveCommand(format: "md" | "txt" | "html") {
@@ -689,7 +628,7 @@ async function saveCommand(format: "md" | "txt" | "html") {
 
   if (!content) {
     vscode.window.showWarningMessage(
-      "CC Ninja: No transcript loaded. Run 'CC Ninja: Copy Transcript' first."
+      "CCNinja: No transcript loaded. Run 'CCNinja: Copy Transcript' first."
     );
     return;
   }
@@ -702,7 +641,7 @@ async function saveCommand(format: "md" | "txt" | "html") {
 
   if (uri) {
     await vscode.workspace.fs.writeFile(uri, Buffer.from(content, "utf-8"));
-    vscode.window.showInformationMessage(`CC Ninja: Saved to ${uri.fsPath}`);
+    vscode.window.showInformationMessage(`CCNinja: Saved to ${uri.fsPath}`);
   }
 }
 
@@ -729,7 +668,7 @@ async function runTranscriptCommand(
   const workspaceFolders = vscode.workspace.workspaceFolders;
   if (!workspaceFolders || workspaceFolders.length === 0) {
     vscode.window.showErrorMessage(
-      "CC Ninja: Open a workspace folder first — transcripts are stored relative to the workspace root."
+      "CCNinja: Open a workspace folder first — transcripts are stored relative to the workspace root."
     );
     return;
   }
@@ -743,7 +682,7 @@ async function runTranscriptCommand(
   await vscode.window.withProgress(
     {
       location: vscode.ProgressLocation.Window,
-      title: "CC Ninja: updating transcript",
+      title: "CCNinja: updating transcript",
     },
     async () => {
       try {
@@ -756,7 +695,7 @@ async function runTranscriptCommand(
         const file = await findNewestTranscript();
         if (!file) {
           vscode.window.showWarningMessage(
-            "CC Ninja: No Claude Code transcripts found for this workspace."
+            "CCNinja: No Claude Code transcripts found for this workspace."
           );
           return;
         }
@@ -767,7 +706,7 @@ async function runTranscriptCommand(
         const messages = parseTranscript(raw);
         if (messages.length === 0) {
           vscode.window.showWarningMessage(
-            "CC Ninja: No messages found in the current session."
+            "CCNinja: No messages found in the current session."
           );
           return;
         }
@@ -805,7 +744,7 @@ async function runTranscriptCommand(
         const open = "Open envelope";
         const reveal = "Reveal in Explorer";
         const choice = await vscode.window.showInformationMessage(
-          `CC Ninja: ${verb} transcript for ${roleId} at ${relPath}`,
+          `CCNinja: ${verb} transcript for ${roleId} at ${relPath}`,
           open,
           reveal
         );
@@ -823,7 +762,7 @@ async function runTranscriptCommand(
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
         vscode.window.showErrorMessage(
-          `CC Ninja: Failed to update transcript — ${msg}`
+          `CCNinja: Failed to update transcript — ${msg}`
         );
       }
     }

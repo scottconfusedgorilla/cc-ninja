@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "CC Ninja for Claude For Chrome",
+  "name": "CCNinja for Claude For Chrome",
   "version": "0.1.0",
   "description": "Capture Claude.ai conversation transcripts as memodef:Transcript artifacts via the local cc-ninja-server bridge.",
   "permissions": ["contextMenus", "notifications", "scripting", "storage"],
@@ -17,7 +17,7 @@
     }
   ],
   "action": {
-    "default_title": "CC Ninja — Save Transcript",
+    "default_title": "CCNinja — Save Transcript",
     "default_icon": {
       "128": "icon128.png"
     }

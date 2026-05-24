@@ -1,4 +1,4 @@
-# CC Ninja — VS Code extension (Chat Copier Ninja)
+# CCNinja — VS Code extension (Chat Copier Ninja)
 
 The VS Code extension component of [Chat Copier Ninja](https://github.com/scottconfusedgorilla/cc-ninja). Captures Claude Code conversation transcripts as `memodef:Transcript` artifacts (envelope + sibling `.body.md`).
 
@@ -15,7 +15,7 @@ The VS Code extension component of [Chat Copier Ninja](https://github.com/scottc
 
 ## Installation
 
-There are two ways to install CC Ninja. Pick whichever feels easier.
+There are two ways to install CCNinja. Pick whichever feels easier.
 
 ### Option A: Install from the `.vsix` file (easiest)
 
@@ -63,9 +63,9 @@ Once published, you'll be able to search "Claude Code Copier Ninja" in the Exten
 
 Press `Ctrl+Shift+P` (or `Cmd+Shift+P` on Mac). This opens a search bar at the top of VS Code where you can type commands.
 
-### Step 2: Type "CC Ninja"
+### Step 2: Type "CCNinja"
 
-Start typing `CC Ninja` and you'll see **"CC Ninja: Copy Transcript"** appear. Click it (or press Enter).
+Start typing `CCNinja` and you'll see **"CCNinja: Copy Transcript"** appear. Click it (or press Enter).
 
 ### Step 3: Pick a transcript file
 
@@ -90,9 +90,9 @@ A new tab opens with your formatted transcript. From here you can:
 
 | What you want to do | How to do it |
 |---|---|
-| **Copy everything to clipboard** | Open Command Palette (`Ctrl+Shift+P`) and run **"CC Ninja: Copy to Clipboard"** — then paste anywhere |
-| **Save as a Markdown file** | Command Palette → **"CC Ninja: Save as Markdown"** — picks a save location |
-| **Save as a plain text file** | Command Palette → **"CC Ninja: Save as Text"** |
+| **Copy everything to clipboard** | Open Command Palette (`Ctrl+Shift+P`) and run **"CCNinja: Copy to Clipboard"** — then paste anywhere |
+| **Save as a Markdown file** | Command Palette → **"CCNinja: Save as Markdown"** — picks a save location |
+| **Save as a plain text file** | Command Palette → **"CCNinja: Save as Text"** |
 
 ---
 
@@ -110,7 +110,7 @@ You don't need to memorize that path — the extension can find them for you (th
 
 ## The status bar
 
-Look at the bottom-right corner of VS Code. You'll see **"CC Ninja ready"**. You can click it as a shortcut to run the main command.
+Look at the bottom-right corner of VS Code. You'll see **"CCNinja ready"**. You can click it as a shortcut to run the main command.
 
 ---
 
@@ -133,9 +133,9 @@ Look at the bottom-right corner of VS Code. You'll see **"CC Ninja ready"**. You
 
 ### Multiple Claude chats in one workspace: save the tab you just typed in
 
-Since v0.16.0, CC Ninja auto-detects the role-id from the active Claude chat tab's label — so if you rename your tabs (e.g. `caliper-strategist` and `caliper-engineer`) you can have multiple chats in one workspace, each routing to its own seat folder. The role-id picks the *right folder*.
+Since v0.16.0, CCNinja auto-detects the role-id from the active Claude chat tab's label — so if you rename your tabs (e.g. `caliper-strategist` and `caliper-engineer`) you can have multiple chats in one workspace, each routing to its own seat folder. The role-id picks the *right folder*.
 
-The catch is on the JSONL side: when several chats are active in one workspace, Claude Code writes a JSONL per chat (all in the same `~/.claude/projects/<encoded>/` directory). CC Ninja currently picks the *most recently modified* JSONL, on the theory that it's the one belonging to the tab you just interacted with. Almost always true — but if you focus a tab without typing in it and immediately save, you'll capture the *previous* tab's JSONL into the *current* tab's seat folder.
+The catch is on the JSONL side: when several chats are active in one workspace, Claude Code writes a JSONL per chat (all in the same `~/.claude/projects/<encoded>/` directory). CCNinja currently picks the *most recently modified* JSONL, on the theory that it's the one belonging to the tab you just interacted with. Almost always true — but if you focus a tab without typing in it and immediately save, you'll capture the *previous* tab's JSONL into the *current* tab's seat folder.
 
 **Workaround:** type a quick message in the tab before saving, so its JSONL becomes the newest. Or save right after the assistant finishes a response.
 

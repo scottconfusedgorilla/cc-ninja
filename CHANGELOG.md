@@ -38,7 +38,7 @@ Acts on QA feedback from caliper-strategist 2026-05-21 (three issues found while
 - **Human participant in `participants[]`.** Transcripts now declare both sides of the conversation. Director identity is auto-inferred from `git config user.email` (preferred) or OS username (fallback), persisted per-workspace, no prompt required
 - **`<system-reminder>` blocks rendered distinctly.** Previously these harness signals were mashed into the user message text. Now extracted from user content, surfaced as a separate role with 🛎️ glyph in markdown and a muted monospace box in the HTML view
 - **Image placeholders.** When the user pasted a screenshot, the body showed nothing where the image was. Now emits `[Image: <media-type>, ~<N> KB]` so a future reader knows an image was present in the original exchange
-- **`CCC Ninja: Set Role-id for This Workspace` command** + role-id surfaced in the success toast — defensive UX for the typo case (`caliper-strategis` slipping in for `caliper-strategist`). The 17-char "truncation" caliper-strategist observed is not a code path in ccc-ninja; the input validator accepts any well-formed lowercase identifier. The new command lets you correct a mistyped role-id without hand-editing workspaceState
+- **`CCCNinja: Set Role-id for This Workspace` command** + role-id surfaced in the success toast — defensive UX for the typo case (`caliper-strategis` slipping in for `caliper-strategist`). The 17-char "truncation" caliper-strategist observed is not a code path in ccc-ninja; the input validator accepts any well-formed lowercase identifier. The new command lets you correct a mistyped role-id without hand-editing workspaceState
 
 ## 0.13.1
 
@@ -49,7 +49,7 @@ Acts on QA feedback from caliper-strategist 2026-05-21 (three issues found while
 Acts on three refinements filed by memodef-strategist (memo 2026-05-20-1955) after seeing the first v0.12.0 emissions in the wild.
 
 - **Subject derivation** now skips harness/system XML tag injections (`<ide_opened_file>`, `<system-reminder>`, `<command-name>`, etc.) when picking the subject anchor — walks forward to the first user turn whose content does not begin with `<`. Subjects (and the filename slugs derived from them) are now scannable
-- **`ended` field** is no longer set on every snapshot. `Update Session Transcript` leaves it absent on creation and preserves any prior value on update. The new **`CCC Ninja: Finalize Session Transcript`** command stamps `ended` to the last message timestamp on detected close. Honors the append-mode design: the envelope's only mutable field is `ended`, set exactly once
+- **`ended` field** is no longer set on every snapshot. `Update Session Transcript` leaves it absent on creation and preserves any prior value on update. The new **`CCCNinja: Finalize Session Transcript`** command stamps `ended` to the last message timestamp on detected close. Honors the append-mode design: the envelope's only mutable field is `ended`, set exactly once
 - **Working-repo root detection**: transcripts now write to the first directory walking shallowly from the workspace root that contains `CLAUDE.md` plus a recognizable spec marker (`SCHEMA.md`, `memos/`, `decisions/`, `notes/`, or `transcripts/`). Falls back to workspace root if not found. Fixes the case where `memodef-spec` (the GitHub repo root) is the workspace folder but `memodef-spec/memodef/` is the actual working-repo root
 
 ## 0.12.1
@@ -59,7 +59,7 @@ Acts on three refinements filed by memodef-strategist (memo 2026-05-20-1955) aft
 
 ## 0.12.0
 
-- Add `CCC Ninja: Update Session Transcript` command — emits a `memodef:Transcript` envelope (`.openthing`) plus sibling `.body.md` per the memodef-spec v0.4 proposal, into `transcripts/<role-id>/` in the workspace root
+- Add `CCCNinja: Update Session Transcript` command — emits a `memodef:Transcript` envelope (`.openthing`) plus sibling `.body.md` per the memodef-spec v0.4 proposal, into `transcripts/<role-id>/` in the workspace root
 - Role-id is prompted on first use and remembered per-workspace via `workspaceState`
 - Same-day same-source JSONL invocations update the existing transcript in place (regenerate body, refresh `ended` timestamp); otherwise a fresh pair is created
 

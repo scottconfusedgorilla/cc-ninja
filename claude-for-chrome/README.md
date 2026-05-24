@@ -22,7 +22,7 @@ The Sidepanel runs in another extension's sandbox, which Chrome forbids third-pa
 2. Open `chrome://extensions`
 3. Toggle **Developer mode** on (top-right)
 4. Click **Load unpacked** and select this `claude-for-chrome/` directory
-5. Pin the CC Ninja icon to the toolbar for convenience
+5. Pin the CCNinja icon to the toolbar for convenience
 
 **Per save:**
 1. Open the conversation on `https://claude.ai/`
@@ -31,7 +31,7 @@ The Sidepanel runs in another extension's sandbox, which Chrome forbids third-pa
    [project]=cc-ninja [position]=ccc-ninja-engineer [user]=scott@confusedgorilla.com
    ```
    All three keys are required, all on one line.
-3. Right-click anywhere in the page → **Save with CC Ninja** (or click the toolbar icon).
+3. Right-click anywhere in the page → **Save with CCNinja** (or click the toolbar icon).
 4. Desktop notification confirms: `Created cc-ninja/transcripts/ccc-ninja-engineer/`.
 
 ---
@@ -78,7 +78,7 @@ The Sidepanel page also has a strict Content Security Policy that blocks direct 
 Override the server URL (only useful if you moved the server off port 7333):
 
 ```js
-// In the extension's service worker console (chrome://extensions → CC Ninja → "service worker"):
+// In the extension's service worker console (chrome://extensions → CCNinja → "service worker"):
 chrome.storage.local.set({ serverUrl: "http://localhost:8000/transcript" });
 ```
 

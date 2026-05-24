@@ -1,5 +1,5 @@
 /**
- * Service worker for CC Ninja Chrome extension.
+ * Service worker for CCNinja Chrome extension.
  *
  * The right-click menu + toolbar icon capture path works ONLY for
  * https://claude.ai/* tabs (a regular browser tab loaded at claude.ai).
@@ -27,7 +27,7 @@ chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.removeAll(() => {
     chrome.contextMenus.create({
       id: MENU_ID,
-      title: "Save with CC Ninja",
+      title: "Save with CCNinja",
       contexts: ["page", "selection", "frame"],
     });
   });
@@ -46,7 +46,7 @@ function triggerCapture(tab) {
   if (tab?.id && isClaudeAiTab(tab.url)) {
     chrome.tabs.sendMessage(tab.id, { type: "cc-ninja/extract" }).catch((err) => {
       notify(
-        "CC Ninja error",
+        "CCNinja error",
         `Content script not reachable (${err.message}). Try reloading the claude.ai tab.`
       );
     });
@@ -55,14 +55,14 @@ function triggerCapture(tab) {
 
   if (isAnthropicSidepanel(tab?.url)) {
     notify(
-      "CC Ninja — Sidepanel saves use Snippets",
+      "CCNinja — Sidepanel saves use Snippets",
       "Open DevTools on the Sidepanel → Sources → Snippets → run \"cc-ninja save\". See the extension's README for the one-time setup."
     );
     return;
   }
 
   notify(
-    "CC Ninja — no capture target",
+    "CCNinja — no capture target",
     "Open a claude.ai conversation in a regular tab, or use the DevTools Snippet path for the Sidepanel."
   );
 }
@@ -90,13 +90,13 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
       sendResponse({ ok: true, result });
       const verb = result.isNew ? "Created" : "Updated";
       notify(
-        "CC Ninja — saved",
+        "CCNinja — saved",
         `${verb} ${result.project}/transcripts/${result.position}/`
       );
     })
     .catch((err) => {
       sendResponse({ ok: false, error: err.message });
-      notify("CC Ninja — error", err.message);
+      notify("CCNinja — error", err.message);
     });
   return true;
 });

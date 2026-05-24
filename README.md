@@ -1,8 +1,8 @@
-# Chat Copier Ninja (CC Ninja)
+# Chat Copier Ninja (CCNinja)
 
 Capture, format, and save AI chat transcripts as durable, git-tracked artifacts.
 
-CC Ninja produces `memodef:Transcript` envelope + sibling `.body.md` pairs per the [memodef-spec v0.4 proposal](https://github.com/scottconfusedgorilla/memodef-spec). Each transcript is a verbatim recording of a conversation, addressable by file path and queryable like any other file in your repo. Use them for snippet retrieval (books, presentations, citations), lost-window recovery, and audit-trail pinning against decisions documented elsewhere.
+CCNinja produces `memodef:Transcript` envelope + sibling `.body.md` pairs per the [memodef-spec v0.4 proposal](https://github.com/scottconfusedgorilla/memodef-spec). Each transcript is a verbatim recording of a conversation, addressable by file path and queryable like any other file in your repo. Use them for snippet retrieval (books, presentations, citations), lost-window recovery, and audit-trail pinning against decisions documented elsewhere.
 
 Originally built as a VS Code extension for Claude Code (when the project was named `ccc-ninja` — Claude Code Copier Ninja). Renamed and restructured in v0.15.0 to span multiple platforms.
 
@@ -48,7 +48,7 @@ See [`vscode/README.md`](vscode/README.md) for installation, command reference, 
 
 ## Project context
 
-- [OAGP](https://oagp.org) — the four-spec family CC Ninja's artifact shape is governed by
+- [OAGP](https://oagp.org) — the four-spec family CCNinja's artifact shape is governed by
 - [memodef-spec](https://github.com/scottconfusedgorilla/memodef-spec) — the spec governing `memodef:Transcript` shape
 - This project is the reference capture-tool implementation cited by the v0.4 spec proposal
 

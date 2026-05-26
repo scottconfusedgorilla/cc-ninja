@@ -11,3 +11,6 @@ export type { ParsedMessage } from "./parser";
 
 export { formatAsMarkdown, formatAsPlainText } from "./formatter";
 export type { FormatOptions } from "./formatter";
+
+export { redactSecrets, REDACTION_TOOL } from "./redactor";
+export type { RedactionResult, RedactionHit, RedactionRule } from "./redactor";

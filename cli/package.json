@@ -1,6 +1,6 @@
 {
   "name": "cc-ninja-cli",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "description": "Standalone CLI that reads Claude Code JSONL sessions and emits memodef:Transcript artifacts. The editor-agnostic sibling of the VS Code extension — works from Claude Code CLI, the Claude Code desktop GUI, or anywhere else that writes to ~/.claude/projects/.",
   "main": "out/index.js",

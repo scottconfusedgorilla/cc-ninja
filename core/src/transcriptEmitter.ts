@@ -16,6 +16,7 @@
 
 import * as fs from "fs";
 import * as path from "path";
+import { redactSecrets, REDACTION_TOOL, RedactionHit } from "./redactor";
 
 export interface EmitOptions {
   /** Base directory; emitter writes to `${transcriptsRoot}/${roleId}/`. */
@@ -56,17 +57,41 @@ export interface EmitResult {
   envelopePath: string;
   bodyPath: string;
   isNew: boolean;
+  /** What the mandatory redaction pass masked before writing. */
+  redaction: { total: number; hits: RedactionHit[] };
 }
 
 export async function emitTranscript(opts: EmitOptions): Promise<EmitResult> {
-  const transcriptsDir = path.join(opts.transcriptsRoot, "transcripts", opts.roleId);
+  // Mandatory, non-optional redaction. The emitter is the single chokepoint
+  // every transport flows through, so redacting here covers all of them and
+  // makes "no opt-out" structurally true: a caller cannot route around it.
+  const redaction = redactSecrets(opts.markdownBody);
+  const securedOpts: EmitOptions = {
+    ...opts,
+    markdownBody: redaction.text,
+    metadata: {
+      ...opts.metadata,
+      // Authoritative — overrides whatever the caller passed. "raw" only ever
+      // means "the redactor ran and matched nothing", never "unprocessed".
+      redaction_status: redaction.total > 0 ? "partial" : "raw",
+      redaction: {
+        tool: REDACTION_TOOL,
+        applied: true,
+        total: redaction.total,
+        types: redaction.hits,
+      },
+    },
+  };
+
+  const transcriptsDir = path.join(securedOpts.transcriptsRoot, "transcripts", securedOpts.roleId);
   await fs.promises.mkdir(transcriptsDir, { recursive: true });
 
-  const existing = await findExistingEnvelope(transcriptsDir, opts.match);
-  if (existing) {
-    return updateExisting(existing, opts);
-  }
-  return createNew(transcriptsDir, opts);
+  const redactionSummary = { total: redaction.total, hits: redaction.hits };
+  const existing = await findExistingEnvelope(transcriptsDir, securedOpts.match);
+  const result = existing
+    ? await updateExisting(existing, securedOpts)
+    : await createNew(transcriptsDir, securedOpts);
+  return { ...result, redaction: redactionSummary };
 }
 
 async function findExistingEnvelope(
@@ -104,7 +129,10 @@ async function findExistingEnvelope(
   return null;
 }
 
-async function updateExisting(envelopePath: string, opts: EmitOptions): Promise<EmitResult> {
+async function updateExisting(
+  envelopePath: string,
+  opts: EmitOptions
+): Promise<Omit<EmitResult, "redaction">> {
   const raw = await fs.promises.readFile(envelopePath, "utf-8");
   const prior = JSON.parse(raw) as Record<string, unknown>;
 
@@ -129,7 +157,10 @@ async function updateExisting(envelopePath: string, opts: EmitOptions): Promise<
   return { envelopePath, bodyPath, isNew: false };
 }
 
-async function createNew(transcriptsDir: string, opts: EmitOptions): Promise<EmitResult> {
+async function createNew(
+  transcriptsDir: string,
+  opts: EmitOptions
+): Promise<Omit<EmitResult, "redaction">> {
   const filenameStem = `${filenameDatePart(opts.started)}--${opts.roleId}--${slugify(opts.subject)}`;
   const envelopeFilename = `${filenameStem}.openthing`;
   const bodyFilename = `${filenameStem}.body.md`;

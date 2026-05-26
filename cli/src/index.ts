@@ -18,7 +18,7 @@ import {
   normalizePath,
 } from "./core";
 
-const PACKAGE_VERSION = "0.2.0";
+const PACKAGE_VERSION = "0.3.0";
 
 interface CliArgs {
   workspace: string;
@@ -268,6 +268,16 @@ async function capture(spec: CaptureSpec): Promise<void> {
   process.stdout.write(
     `${verb} ${path.relative(spec.workspace, result.envelopePath)}\n`
   );
+
+  if (result.redaction.total > 0) {
+    const breakdown = result.redaction.hits
+      .map((h) => `${h.type}×${h.count}`)
+      .join(", ");
+    process.stdout.write(
+      `  redacted ${result.redaction.total} secret(s) before writing: ${breakdown}\n` +
+        `  (masked in the transcript as [REDACTED:<type>] — rotate any real credentials)\n`
+    );
+  }
 }
 
 async function main(): Promise<void> {

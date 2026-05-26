@@ -18,7 +18,7 @@ import {
   normalizePath,
 } from "./core";
 
-const PACKAGE_VERSION = "0.1.0";
+const PACKAGE_VERSION = "0.2.0";
 
 interface CliArgs {
   workspace: string;
@@ -92,10 +92,41 @@ function printHelp(): void {
 }
 
 function encodeWorkspacePath(workspace: string): string {
-  // Claude Code encodes drive-letter paths by lowercasing the drive and
-  // replacing ':', '/', and '\\' with '-'. E.g. s:\Projects\thingalog →
-  // s--Projects-thingalog.
-  return workspace.replace(/[:\\/]+/g, "-");
+  // Claude Code encodes a workspace path by lowercasing the drive letter and
+  // replacing EACH ':', '/', and '\\' with a single '-' (separators are NOT
+  // run-collapsed: 's:\\Projects' → 's--Projects', two dashes). E.g.
+  // S:\Projects\thingalog → s--Projects-thingalog.
+  const lowerDrive = workspace.replace(/^([a-zA-Z]):/, (_m, d: string) => `${d.toLowerCase()}:`);
+  return lowerDrive.replace(/[:\\/]/g, "-");
+}
+
+/**
+ * Resolve the encoded Claude Code project directory for a workspace. Rather
+ * than trust the encoder to byte-match what Claude Code wrote (the casing of
+ * path segments can differ from the path we were handed, and varies across
+ * Windows/WSL/macOS), we compute the expected name and then match it against
+ * the actual folders in projectsRoot — exact first, then case-insensitively.
+ */
+async function resolveEncodedDir(
+  projectsRoot: string,
+  workspace: string
+): Promise<{ dir: string; encoded: string }> {
+  const encoded = encodeWorkspacePath(workspace);
+  const exact = path.join(projectsRoot, encoded);
+  try {
+    if ((await fs.promises.stat(exact)).isDirectory()) return { dir: exact, encoded };
+  } catch {
+    /* no exact match — fall through to scan */
+  }
+  try {
+    const entries = await fs.promises.readdir(projectsRoot, { withFileTypes: true });
+    const lower = encoded.toLowerCase();
+    const hit = entries.find((e) => e.isDirectory() && e.name.toLowerCase() === lower);
+    if (hit) return { dir: path.join(projectsRoot, hit.name), encoded };
+  } catch {
+    /* projectsRoot unreadable — report the computed path in the error */
+  }
+  return { dir: exact, encoded };
 }
 
 async function findNewestJsonl(encodedDir: string): Promise<string | null> {
@@ -265,13 +296,13 @@ async function main(): Promise<void> {
     parentJsonl = path.resolve(args.jsonlOverride);
     encodedDir = path.dirname(parentJsonl);
   } else {
-    const encoded = encodeWorkspacePath(workspace);
-    encodedDir = path.join(args.projectsRoot, encoded);
+    const resolved = await resolveEncodedDir(args.projectsRoot, workspace);
+    encodedDir = resolved.dir;
     parentJsonl = await findNewestJsonl(encodedDir);
     if (!parentJsonl) {
       process.stderr.write(
         `error: no .jsonl found under ${encodedDir}.\n` +
-          `       (Workspace path encoded as ${encoded}.)\n`
+          `       (Workspace path encoded as ${resolved.encoded}.)\n`
       );
       process.exit(1);
     }

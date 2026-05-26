@@ -2,7 +2,7 @@
 import * as http from "http";
 import { handleTranscript, ServerConfig } from "./handler";
 
-const PACKAGE_VERSION = "0.1.0";
+const PACKAGE_VERSION = "0.2.0";
 
 /**
  * Relay page served at GET /relay. Lets a CSP-restricted page (the Anthropic
@@ -183,9 +183,14 @@ async function main(): Promise<void> {
             project?: string;
             position?: string;
             envelopePath?: string;
+            redaction?: { total: number; hits: { type: string; count: number }[] };
           };
           const verb = b.isNew ? "Created" : "Updated";
           logLine(`  → 200  ${verb} ${b.project}/transcripts/${b.position}/`);
+          if (b.redaction && b.redaction.total > 0) {
+            const breakdown = b.redaction.hits.map((h) => `${h.type}×${h.count}`).join(", ");
+            logLine(`         redacted ${b.redaction.total} secret(s): ${breakdown} — rotate any real credentials`);
+          }
         } else {
           logLine(`  → ${result.status}  ${(result.body as { error?: string }).error ?? "(no message)"}`);
         }

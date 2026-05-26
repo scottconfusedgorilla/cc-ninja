@@ -1,6 +1,6 @@
 {
   "name": "cc-ninja-server",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Local HTTP bridge that receives transcript POSTs from the claude-for-chrome extension and writes memodef:Transcript envelope + sibling .body.md to a configured git repo.",
   "main": "out/index.js",

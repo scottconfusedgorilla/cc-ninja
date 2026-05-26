@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.17.0 — mandatory secret redaction
+
+Transcripts are now redacted on every save. Recognized secrets (vendor API keys — Anthropic, OpenAI, AWS, GitHub, Google, Slack, Stripe — `Bearer` tokens, and PEM private-key blocks) are masked as `[REDACTED:<type>]` before the body is written. This is **not optional**: a capture tool whose output is committed to git must never launder a secret into history. The redaction logic lives in `@cc-ninja/core`, so every transport (this extension, the CLI, the server) inherits it.
+
+When a save redacts something, the extension shows a **warning toast** naming the count and types, with a reminder to rotate any real credentials. (Redacting an already-committed secret here does not un-leak it — rotate the credential.)
+
+The pattern set is deliberately conservative (high-confidence formats only) so legitimate conversation content is never silently corrupted.
+
 ## 0.16.6 — remove "Copy This Session" command
 
 Removed the **CCNinja: Copy This Session** command (`ccNinja.copyThisSession`). It was an older quick-action that auto-grabbed the newest JSONL, formatted it, and showed an HTML preview — useful before the memodef:Transcript flow landed, but now redundant with **Save Most Recent Chat** (which writes the canonical artifact) and **Visual Preview** (which renders the last-formatted output). Anyone with a keybinding pointing at `ccNinja.copyThisSession` will need to rebind.

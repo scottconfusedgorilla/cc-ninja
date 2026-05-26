@@ -2,7 +2,7 @@
   "name": "cc-ninja",
   "displayName": "Chat Copier Ninja",
   "description": "Capture, format, and save AI chat transcripts as memodef:Transcript artifacts. VS Code extension for Claude Code; companion Chrome extension and local server planned for Claude For Chrome.",
-  "version": "0.16.6",
+  "version": "0.17.0",
   "publisher": "scottconfusedgorilla",
   "license": "MIT",
   "repository": {

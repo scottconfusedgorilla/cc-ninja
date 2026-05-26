@@ -88,6 +88,7 @@ export async function handleTranscript(
       isNew: result.isNew,
       project,
       position,
+      redaction: result.redaction,
     },
   };
 }

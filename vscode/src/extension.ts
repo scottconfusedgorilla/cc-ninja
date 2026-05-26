@@ -741,6 +741,16 @@ async function runTranscriptCommand(
         );
         refreshStatusBarTooltip(context);
 
+        if (result.redaction.total > 0) {
+          const breakdown = result.redaction.hits
+            .map((h) => `${h.type}×${h.count}`)
+            .join(", ");
+          vscode.window.showWarningMessage(
+            `CCNinja: redacted ${result.redaction.total} secret(s) before saving — ${breakdown}. ` +
+              `Masked as [REDACTED:<type>]; rotate any real credentials.`
+          );
+        }
+
         const open = "Open envelope";
         const reveal = "Reveal in Explorer";
         const choice = await vscode.window.showInformationMessage(

@@ -1,0 +1,17 @@
+{
+  "catdef": "1.4",
+  "memodef": "0.3.1",
+  "type": "memodef:Memo",
+  "from": "director",
+  "to": "ccninja-strategist",
+  "sent": "2026-05-26T17:45:00Z",
+  "subject": "OAGP bootstrap ratified — CCNinja org charter instantiated",
+  "action_required": false,
+  "body_ref": "2026-05-26-1345--director--ccninja-strategist--oagp-bootstrap-ratified.body.md",
+  "metadata": {
+    "thread_id": null,
+    "proposal_ref": "proposals/oagp-bootstrap-2026-05-26.md",
+    "charter_ref": "org/ccninja-organization.opencatalog",
+    "sender_session_arc": "Director (Scott Edsby) ratification, relayed via the ccninja-bootstrap-strategist helper seat, 2026-05-26"
+  }
+}
